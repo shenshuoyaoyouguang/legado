@@ -182,9 +182,9 @@ class BookTest {
     @Test
     fun testReadTime() {
         val currentTime = System.currentTimeMillis()
-        book.durReadTime = currentTime
+        book.durChapterTime = currentTime
         
-        assertEquals(currentTime, book.durReadTime)
+        assertEquals(currentTime, book.durChapterTime)
     }
 
     /**

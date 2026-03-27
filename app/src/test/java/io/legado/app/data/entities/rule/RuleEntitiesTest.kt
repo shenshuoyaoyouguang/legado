@@ -18,24 +18,24 @@ class RuleEntitiesTest {
     fun testSearchRuleBasicProperties() {
         val searchRule = SearchRule(
             bookList = "class.book-item",
-            bookName = "class.title@text",
+            name = "class.title@text",
             author = "class.author@text",
             bookUrl = "a@href",
             coverUrl = "img@src",
             intro = "class.intro@text",
             kind = "class.category@text",
-            lastChapterTitle = "class.latest@text",
+            lastChapter = "class.latest@text",
             wordCount = "class.words@text"
         )
         
         assertEquals("class.book-item", searchRule.bookList)
-        assertEquals("class.title@text", searchRule.bookName)
+        assertEquals("class.title@text", searchRule.name)
         assertEquals("class.author@text", searchRule.author)
         assertEquals("a@href", searchRule.bookUrl)
         assertEquals("img@src", searchRule.coverUrl)
         assertEquals("class.intro@text", searchRule.intro)
         assertEquals("class.category@text", searchRule.kind)
-        assertEquals("class.latest@text", searchRule.lastChapterTitle)
+        assertEquals("class.latest@text", searchRule.lastChapter)
         assertEquals("class.words@text", searchRule.wordCount)
     }
 
@@ -50,7 +50,7 @@ class RuleEntitiesTest {
             coverUrl = "img.cover@src",
             intro = "div.intro@html",
             kind = "span.category@text",
-            lastChapterTitle = "a.latest@text",
+            lastChapter = "a.latest@text",
             tocUrl = "a.toc@href",
             wordCount = "span.words@text",
             canReName = "true"
@@ -61,7 +61,7 @@ class RuleEntitiesTest {
         assertEquals("img.cover@src", bookInfoRule.coverUrl)
         assertEquals("div.intro@html", bookInfoRule.intro)
         assertEquals("span.category@text", bookInfoRule.kind)
-        assertEquals("a.latest@text", bookInfoRule.lastChapterTitle)
+        assertEquals("a.latest@text", bookInfoRule.lastChapter)
         assertEquals("a.toc@href", bookInfoRule.tocUrl)
         assertEquals("span.words@text", bookInfoRule.wordCount)
         assertEquals("true", bookInfoRule.canReName)
@@ -124,18 +124,18 @@ class RuleEntitiesTest {
     fun testExploreRuleBasicProperties() {
         val exploreRule = ExploreRule(
             bookList = "div.explore-list@div.book",
-            bookName = "h3@text",
+            name = "h3@text",
             author = "span.author@text",
             bookUrl = "a@href",
             coverUrl = "img@src",
             intro = "p.intro@text",
             kind = "span.tag@text",
-            lastChapterTitle = "span.chapter@text",
+            lastChapter = "span.chapter@text",
             wordCount = "span.words@text"
         )
         
         assertEquals("div.explore-list@div.book", exploreRule.bookList)
-        assertEquals("h3@text", exploreRule.bookName)
+        assertEquals("h3@text", exploreRule.name)
         assertEquals("span.author@text", exploreRule.author)
         assertEquals("a@href", exploreRule.bookUrl)
     }
@@ -171,7 +171,7 @@ class RuleEntitiesTest {
     fun testEmptyRuleCreation() {
         val emptySearchRule = SearchRule()
         assertNull(emptySearchRule.bookList)
-        assertNull(emptySearchRule.bookName)
+        assertNull(emptySearchRule.name)
         assertNull(emptySearchRule.author)
         assertNull(emptySearchRule.bookUrl)
         
@@ -200,7 +200,7 @@ class RuleEntitiesTest {
             bookSourceName = "完整规则书源",
             ruleSearch = SearchRule(
                 bookList = "class.search-result@div.item",
-                bookName = "h2@text",
+                name = "h2@text",
                 author = "span.author@text",
                 bookUrl = "a@href"
             ),
@@ -219,7 +219,7 @@ class RuleEntitiesTest {
             ),
             ruleExplore = ExploreRule(
                 bookList = "div.category@div.book",
-                bookName = "h3@text"
+                name = "h3@text"
             ),
             ruleReview = ReviewRule(
                 reviewList = "div.reviews@div.item",
@@ -252,13 +252,13 @@ class RuleEntitiesTest {
         // JSON路径规则测试
         val jsonSearchRule = SearchRule(
             bookList = "$.data.books[*]",
-            bookName = "$.name",
+            name = "$.name",
             author = "$.author",
             bookUrl = "$.url"
         )
         
         assertTrue(jsonSearchRule.bookList!!.startsWith("$"))
-        assertTrue(jsonSearchRule.bookName!!.startsWith("$"))
+        assertTrue(jsonSearchRule.name!!.startsWith("$"))
         assertTrue(jsonSearchRule.author!!.startsWith("$"))
         assertTrue(jsonSearchRule.bookUrl!!.startsWith("$"))
     }

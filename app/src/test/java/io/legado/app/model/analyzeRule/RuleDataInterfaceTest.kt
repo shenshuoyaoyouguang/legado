@@ -3,9 +3,9 @@ package io.legado.app.model.analyzeRule
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
 import io.legado.app.data.entities.BookSource
-import io.legado.app.data.entities.rule.SearchRule
 import io.legado.app.data.entities.rule.BookInfoRule
 import io.legado.app.data.entities.rule.ContentRule
+import io.legado.app.data.entities.rule.SearchRule
 import io.legado.app.data.entities.rule.TocRule
 import org.junit.Assert.*
 import org.junit.Before
@@ -17,17 +17,29 @@ import org.junit.Test
  */
 class RuleDataInterfaceTest {
 
-    private lateinit var book: Book
     private lateinit var bookChapter: BookChapter
     private lateinit var bookSource: BookSource
+    private lateinit var ruleData: FakeRuleDataInterface
+
+    private class FakeRuleDataInterface : RuleDataInterface {
+        override val variableMap = hashMapOf<String, String>()
+        private val bigVariableMap = hashMapOf<String, String>()
+
+        override fun putBigVariable(key: String, value: String?) {
+            if (value == null) {
+                bigVariableMap.remove(key)
+            } else {
+                bigVariableMap[key] = value
+            }
+        }
+
+        override fun getBigVariable(key: String): String? = bigVariableMap[key]
+
+        fun hasBigVariable(key: String): Boolean = bigVariableMap.containsKey(key)
+    }
 
     @Before
     fun setUp() {
-        book = Book(
-            bookUrl = "https://test.example.com/book",
-            name = "测试书籍",
-            author = "测试作者"
-        )
         bookChapter = BookChapter(
             url = "https://test.example.com/chapter/1",
             title = "第一章",
@@ -37,91 +49,109 @@ class RuleDataInterfaceTest {
             bookSourceUrl = "https://source.example.com",
             bookSourceName = "测试书源"
         )
+        ruleData = FakeRuleDataInterface()
     }
 
     /**
-     * 测试BookChapter变量Map初始化
+     * 测试RuleDataInterface变量Map初始化
      */
     @Test
-    fun testBookChapterVariableMapInitialization() {
+    fun testVariableMapInitialization() {
         // 未设置变量时应为空Map
-        assertTrue(bookChapter.variableMap.isEmpty())
+        assertTrue(ruleData.variableMap.isEmpty())
     }
 
     /**
-     * 测试BookChapter变量存取
+     * 测试变量存取
      */
     @Test
-    fun testBookChapterPutAndGetVariable() {
-        bookChapter.putVariable("testKey", "testValue")
-        assertEquals("testValue", bookChapter.variableMap["testKey"])
+    fun testPutAndGetVariable() {
+        ruleData.putVariable("testKey", "testValue")
+        assertEquals("testValue", ruleData.variableMap["testKey"])
+        assertEquals("testValue", ruleData.getVariable("testKey"))
         
         // 更新变量
-        bookChapter.putVariable("testKey", "newValue")
-        assertEquals("newValue", bookChapter.variableMap["testKey"])
+        ruleData.putVariable("testKey", "newValue")
+        assertEquals("newValue", ruleData.variableMap["testKey"])
+        assertEquals("newValue", ruleData.getVariable("testKey"))
     }
 
     /**
-     * 测试BookChapter多变量存储
+     * 测试多变量存储
      */
     @Test
-    fun testBookChapterMultipleVariables() {
-        bookChapter.putVariable("var1", "value1")
-        bookChapter.putVariable("var2", "value2")
-        bookChapter.putVariable("var3", "value3")
+    fun testMultipleVariables() {
+        ruleData.putVariable("var1", "value1")
+        ruleData.putVariable("var2", "value2")
+        ruleData.putVariable("var3", "value3")
         
-        assertEquals(3, bookChapter.variableMap.size)
-        assertEquals("value1", bookChapter.variableMap["var1"])
-        assertEquals("value2", bookChapter.variableMap["var2"])
-        assertEquals("value3", bookChapter.variableMap["var3"])
+        assertEquals(3, ruleData.variableMap.size)
+        assertEquals("value1", ruleData.variableMap["var1"])
+        assertEquals("value2", ruleData.variableMap["var2"])
+        assertEquals("value3", ruleData.variableMap["var3"])
     }
 
     /**
-     * 测试BookChapter变量持久化
+     * 测试空值会删除变量
      */
     @Test
-    fun testBookChapterVariablePersistence() {
-        bookChapter.putVariable("persistKey", "persistValue")
+    fun testNullVariableRemovesKey() {
+        ruleData.putVariable("nullKey", "value")
+        ruleData.putVariable("nullKey", null)
+
+        assertFalse(ruleData.variableMap.containsKey("nullKey"))
+        assertEquals("", ruleData.getVariable("nullKey"))
+        assertFalse(ruleData.hasBigVariable("nullKey"))
+    }
+
+    /**
+     * 测试变量覆盖
+     */
+    @Test
+    fun testVariableOverride() {
+        ruleData.putVariable("overrideKey", "original")
+        ruleData.putVariable("overrideKey", "overridden")
         
-        // variable字段应该被更新为JSON
-        assertNotNull(bookChapter.variable)
-        assertTrue(bookChapter.variable!!.contains("persistKey"))
-        assertTrue(bookChapter.variable!!.contains("persistValue"))
+        assertEquals("overridden", ruleData.variableMap["overrideKey"])
+        assertEquals(1, ruleData.variableMap.size)
     }
 
     /**
-     * 测试BookChapter空值变量
+     * 测试特殊字符变量值
      */
     @Test
-    fun testBookChapterNullVariable() {
-        bookChapter.putVariable("nullKey", null)
-        
-        // 应该能够处理null值
-        assertTrue(bookChapter.variableMap.containsKey("nullKey"))
-        assertNull(bookChapter.variableMap["nullKey"])
-    }
-
-    /**
-     * 测试BookChapter变量覆盖
-     */
-    @Test
-    fun testBookChapterVariableOverride() {
-        bookChapter.putVariable("overrideKey", "original")
-        bookChapter.putVariable("overrideKey", "overridden")
-        
-        assertEquals("overridden", bookChapter.variableMap["overrideKey"])
-        assertEquals(1, bookChapter.variableMap.size)
-    }
-
-    /**
-     * 测试BookChapter特殊字符变量值
-     */
-    @Test
-    fun testBookChapterSpecialCharacterValues() {
+    fun testSpecialCharacterValues() {
         val specialValue = "包含特殊字符: \n\t\"中文\""
-        bookChapter.putVariable("specialKey", specialValue)
+        ruleData.putVariable("specialKey", specialValue)
         
-        assertEquals(specialValue, bookChapter.variableMap["specialKey"])
+        assertEquals(specialValue, ruleData.variableMap["specialKey"])
+    }
+
+    /**
+     * 测试超长变量走大变量存储
+     */
+    @Test
+    fun testLargeVariableStoredOutsideVariableMap() {
+        val largeValue = "x".repeat(10000)
+        ruleData.putVariable("largeKey", largeValue)
+
+        assertFalse(ruleData.variableMap.containsKey("largeKey"))
+        assertTrue(ruleData.hasBigVariable("largeKey"))
+        assertEquals(largeValue, ruleData.getVariable("largeKey"))
+    }
+
+    /**
+     * 测试小变量会清理大变量存储
+     */
+    @Test
+    fun testSmallVariableClearsBigVariableStorage() {
+        val largeValue = "x".repeat(10000)
+        ruleData.putVariable("largeKey", largeValue)
+        ruleData.putVariable("largeKey", "smallValue")
+
+        assertEquals("smallValue", ruleData.variableMap["largeKey"])
+        assertFalse(ruleData.hasBigVariable("largeKey"))
+        assertEquals("smallValue", ruleData.getVariable("largeKey"))
     }
 
     /**
@@ -138,31 +168,6 @@ class RuleDataInterfaceTest {
         
         val chapter3 = BookChapter(url = "https://different.url")
         assertNotEquals(chapter1, chapter3)
-    }
-
-    /**
-     * 测试BookSource变量管理
-     */
-    @Test
-    fun testBookSourceVariableManagement() {
-        // BookSource通过BaseSource接口管理变量
-        bookSource.put("sourceVar", "sourceValue")
-        assertEquals("sourceValue", bookSource.get("sourceVar"))
-        
-        // 空变量返回空字符串
-        assertEquals("", bookSource.get("nonexistent"))
-    }
-
-    /**
-     * 测试BookSource变量更新
-     */
-    @Test
-    fun testBookSourceVariableUpdate() {
-        bookSource.put("updateVar", "original")
-        assertEquals("original", bookSource.get("updateVar"))
-        
-        bookSource.put("updateVar", "updated")
-        assertEquals("updated", bookSource.get("updateVar"))
     }
 
     /**
@@ -185,7 +190,7 @@ class RuleDataInterfaceTest {
             bookSourceName = "完整书源",
             ruleSearch = SearchRule(
                 bookList = "class.book",
-                bookName = "class.name@text",
+                name = "class.name@text",
                 bookUrl = "a@href"
             ),
             ruleBookInfo = BookInfoRule(

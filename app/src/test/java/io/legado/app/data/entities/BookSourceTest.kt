@@ -148,7 +148,7 @@ class BookSourceTest {
     fun testFullRuleConfiguration() {
         bookSource.ruleSearch = SearchRule(
             bookList = "class.book-item",
-            bookName = "class.title@text",
+            name = "class.title@text",
             bookUrl = "a@href"
         )
         bookSource.ruleBookInfo = BookInfoRule(
@@ -169,7 +169,7 @@ class BookSourceTest {
         assertNotNull(bookSource.ruleContent)
 
         assertEquals("class.book-item", bookSource.ruleSearch!!.bookList)
-        assertEquals("class.title@text", bookSource.ruleSearch!!.bookName)
+        assertEquals("class.title@text", bookSource.ruleSearch!!.name)
         assertEquals("a@href", bookSource.ruleSearch!!.bookUrl)
     }
 

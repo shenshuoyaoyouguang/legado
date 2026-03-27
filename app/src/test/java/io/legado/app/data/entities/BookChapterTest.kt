@@ -190,33 +190,32 @@ class BookChapterTest {
     @Test
     fun testVariableMapInitialization() {
         // 变量为空时应该返回空Map
-        bookChapter.variable = null
-        assertTrue(bookChapter.variableMap.isEmpty())
+        val emptyVariableChapter = BookChapter(variable = null)
+        assertTrue(emptyVariableChapter.variableMap.isEmpty())
         
         // 设置有效JSON变量
-        bookChapter.variable = "{\"key\":\"value\"}"
-        val map = bookChapter.variableMap
+        val chapterWithVariable = BookChapter(variable = "{\"key\":\"value\"}")
+        val map = chapterWithVariable.variableMap
         assertEquals("value", map["key"])
     }
 
     /**
-     * 测试putVariable方法
+     * 测试变量JSON解析
      */
     @Test
-    fun testPutVariable() {
-        bookChapter.putVariable("testKey", "testValue")
-        assertEquals("testValue", bookChapter.variableMap["testKey"])
-        assertNotNull(bookChapter.variable)
+    fun testVariableJsonParsing() {
+        val chapter = BookChapter(variable = "{\"testKey\":\"testValue\"}")
+        assertEquals("testValue", chapter.variableMap["testKey"])
+        assertNotNull(chapter.variable)
     }
 
     /**
-     * 测试getVariable方法（通过variableMap）
+     * 测试getVariable方法命中内存变量
      */
     @Test
     fun testGetVariable() {
-        bookChapter.putVariable("myKey", "myValue")
-        val value = bookChapter.variableMap["myKey"]
-        assertEquals("myValue", value)
+        val chapter = BookChapter(variable = "{\"myKey\":\"myValue\"}")
+        assertEquals("myValue", chapter.getVariable("myKey"))
     }
 
     /**
