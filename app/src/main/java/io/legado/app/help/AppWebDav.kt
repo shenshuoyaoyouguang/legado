@@ -30,7 +30,6 @@ import io.legado.app.utils.removePref
 import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.runBlocking
 import splitties.init.appCtx
 import java.io.File
 
@@ -51,12 +50,6 @@ object AppWebDav {
     val isOk get() = authorization != null
 
     val isJianGuoYun get() = rootWebDavUrl.startsWith(defaultWebDavUrl, true)
-
-    init {
-        runBlocking {
-            upConfig()
-        }
-    }
 
     private val rootWebDavUrl: String
         get() {

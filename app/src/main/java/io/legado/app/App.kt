@@ -120,6 +120,8 @@ class App : Application() {
             }
             //调整排序序号
             SourceHelp.adjustSortNumber()
+            //初始化WebDAV配置
+            AppWebDav.upConfig()
             //同步阅读记录
             if (AppConfig.syncBookProgress) {
                 AppWebDav.downloadAllBookProgress()
