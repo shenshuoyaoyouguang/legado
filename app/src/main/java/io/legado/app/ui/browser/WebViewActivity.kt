@@ -337,7 +337,14 @@ class WebViewActivity : VMBaseActivity<ActivityWebViewBinding, WebViewModel>() {
             handler: SslErrorHandler?,
             error: SslError?
         ) {
-            handler?.proceed()
+            // 根据配置决定是否忽略SSL错误
+            if (io.legado.app.help.config.AppConfig.sslStrictMode) {
+                // 严格模式：取消加载，不忽略SSL错误
+                handler?.cancel()
+            } else {
+                // 兼容模式：忽略SSL错误，继续加载
+                handler?.proceed()
+            }
         }
 
     }

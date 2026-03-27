@@ -80,11 +80,11 @@ class WebService : BaseService() {
         NetworkChangedListener(this)
     }
 
-    @SuppressLint("WakelockTimeout")
     override fun onCreate() {
         super.onCreate()
         if (useWakeLock) {
-            wakeLock.acquire()
+            // 设置10分钟超时，避免无限期持有WakeLock
+            wakeLock.acquire(10 * 60 * 1000L)
             wifiLock?.acquire()
         }
         isRun = true
@@ -111,13 +111,13 @@ class WebService : BaseService() {
         }
     }
 
-    @SuppressLint("WakelockTimeout")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             IntentAction.stop -> stopSelf()
             "copyHostAddress" -> sendToClip(hostAddress)
             "serve" -> if (useWakeLock) {
-                wakeLock.acquire()
+                // 设置10分钟超时，避免无限期持有WakeLock
+                wakeLock.acquire(10 * 60 * 1000L)
                 wifiLock?.acquire()
             }
 

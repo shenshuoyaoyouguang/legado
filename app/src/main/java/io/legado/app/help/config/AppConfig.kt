@@ -738,5 +738,45 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
             appCtx.putPrefBoolean(PreferKey.welcomeShowIconDark, value)
         }
 
+    // ==================== 安全配置 ====================
+    
+    /**
+     * SSL严格模式
+     * true: 启用严格SSL证书验证（推荐，更安全）
+     * false: 允许自签名证书和主机名不匹配（兼容模式，适合非HTTPS书源）
+     * 默认值: false（保持向后兼容）
+     */
+    var sslStrictMode: Boolean
+        get() = appCtx.getPrefBoolean(PreferKey.sslStrictMode, false)
+        set(value) {
+            appCtx.putPrefBoolean(PreferKey.sslStrictMode, value)
+        }
+
+    /**
+     * API认证开关
+     * true: 启用ContentProvider和Web API的Token认证
+     * false: 允许任意访问（兼容模式）
+     * 默认值: false（保持向后兼容）
+     */
+    var apiAuthEnabled: Boolean
+        get() = appCtx.getPrefBoolean(PreferKey.apiAuthEnabled, false)
+        set(value) {
+            appCtx.putPrefBoolean(PreferKey.apiAuthEnabled, value)
+        }
+
+    /**
+     * API认证Token
+     * 用于ContentProvider和Web API的身份验证
+     */
+    var apiAuthToken: String?
+        get() = appCtx.getPrefString(PreferKey.apiAuthToken)
+        set(value) {
+            if (value.isNullOrEmpty()) {
+                appCtx.removePref(PreferKey.apiAuthToken)
+            } else {
+                appCtx.putPrefString(PreferKey.apiAuthToken, value)
+            }
+        }
+
 }
 

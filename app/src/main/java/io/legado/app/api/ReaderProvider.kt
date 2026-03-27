@@ -13,10 +13,19 @@ import com.google.gson.Gson
 import io.legado.app.api.controller.BookController
 import io.legado.app.api.controller.BookSourceController
 import io.legado.app.api.controller.RssSourceController
+import io.legado.app.help.config.AppConfig
 import kotlinx.coroutines.runBlocking
 
 /**
  * Export book data to other app.
+ * 
+ * 安全说明：
+ * 1. Provider已通过signature级别权限保护，仅同签名应用可访问
+ * 2. 可选的Token认证：当AppConfig.apiAuthEnabled=true时，需要提供有效的apiAuthToken
+ * 
+ * 使用方式：
+ * - 调用方需要在请求参数中添加token参数，值为AppConfig.apiAuthToken
+ * - 示例：content://authority/bookSource/query?token=YOUR_TOKEN
  */
 class ReaderProvider : ContentProvider() {
     private enum class RequestCode {
@@ -24,6 +33,11 @@ class ReaderProvider : ContentProvider() {
         SaveRssSource, SaveRssSources, DeleteRssSources, GetRssSource, GetRssSources,
         SaveBook, GetBookshelf, RefreshToc, GetChapterList, GetBookContent, GetBookCover,
         SaveBookProgress
+    }
+
+    companion object {
+        private const val TOKEN_PARAM = "token"
+        private const val AUTH_TOKEN_HEADER = "auth_token"
     }
 
     private val postBodyKey = "json"
@@ -57,12 +71,52 @@ class ReaderProvider : ContentProvider() {
         return false
     }
 
+    /**
+     * 验证访问权限
+     * 当启用API认证时，检查请求中的token是否有效
+     * @param uri 请求URI，可能包含token参数
+     * @param values ContentValues，可能包含auth_token
+     * @return true表示验证通过，false表示验证失败
+     */
+    private fun validateAuth(uri: Uri?, values: ContentValues? = null): Boolean {
+        // 未启用认证时，允许所有访问
+        if (!AppConfig.apiAuthEnabled) {
+            return true
+        }
+
+        val expectedToken = AppConfig.apiAuthToken
+        if (expectedToken.isNullOrBlank()) {
+            // 启用了认证但未设置token，允许访问（兼容性考虑）
+            return true
+        }
+
+        // 从URI参数中获取token
+        val uriToken = uri?.getQueryParameter(TOKEN_PARAM)
+        if (uriToken == expectedToken) {
+            return true
+        }
+
+        // 从ContentValues中获取token
+        val valuesToken = values?.getAsString(AUTH_TOKEN_HEADER)
+        if (valuesToken == expectedToken) {
+            return true
+        }
+
+        return false
+    }
+
     override fun delete(
         uri: Uri,
         selection: String?,
         selectionArgs: Array<String>?
     ): Int {
         if (sMatcher.match(uri) < 0) return -1
+        
+        // 验证权限
+        if (!validateAuth(uri)) {
+            return -1
+        }
+        
         when (RequestCode.entries[sMatcher.match(uri)]) {
             RequestCode.DeleteBookSources -> BookSourceController.deleteSources(selection)
             RequestCode.DeleteRssSources -> BookSourceController.deleteSources(selection)
@@ -77,6 +131,12 @@ class ReaderProvider : ContentProvider() {
 
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
         if (sMatcher.match(uri) < 0) return null
+        
+        // 验证权限
+        if (!validateAuth(uri, values)) {
+            return null
+        }
+        
         runBlocking {
             when (RequestCode.entries[sMatcher.match(uri)]) {
                 RequestCode.SaveBookSource -> values?.let {
@@ -115,6 +175,13 @@ class ReaderProvider : ContentProvider() {
         uri: Uri, projection: Array<String>?, selection: String?,
         selectionArgs: Array<String>?, sortOrder: String?
     ): Cursor? {
+        if (sMatcher.match(uri) < 0) return null
+        
+        // 验证权限
+        if (!validateAuth(uri)) {
+            return null
+        }
+        
         val map: MutableMap<String, ArrayList<String>> = HashMap()
         uri.getQueryParameter("url")?.let {
             map["url"] = arrayListOf(it)
@@ -125,7 +192,7 @@ class ReaderProvider : ContentProvider() {
         uri.getQueryParameter("path")?.let {
             map["path"] = arrayListOf(it)
         }
-        return if (sMatcher.match(uri) < 0) null else when (RequestCode.entries[sMatcher.match(uri)]) {
+        return when (RequestCode.entries[sMatcher.match(uri)]) {
             RequestCode.GetBookSource -> SimpleCursor(BookSourceController.getSource(map))
             RequestCode.GetBookSources -> SimpleCursor(BookSourceController.sources)
             RequestCode.GetRssSource -> SimpleCursor(RssSourceController.getSource(map))

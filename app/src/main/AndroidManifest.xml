@@ -2,6 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- 自定义权限：保护ContentProvider API访问 -->
+    <permission
+        android:name="${applicationId}.permission.READER_PROVIDER"
+        android:description="@string/permission_reader_provider_desc"
+        android:label="@string/permission_reader_provider_label"
+        android:protectionLevel="signature" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -501,6 +508,7 @@
             android:authorities="${applicationId}.readerProvider"
             android:enabled="true"
             android:exported="true"
+            android:permission="${applicationId}.permission.READER_PROVIDER"
             tools:ignore="ExportedContentProvider" />
         <provider
             android:name="androidx.core.content.FileProvider"

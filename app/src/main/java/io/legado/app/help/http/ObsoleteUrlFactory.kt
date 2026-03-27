@@ -3,7 +3,7 @@ package io.legado.app.help.http
 import android.os.Build
 import androidx.annotation.RequiresApi
 import io.legado.app.help.http.CookieManager.cookieJarHeader
-import io.legado.app.help.http.SSLHelper.unsafeTrustManager
+import io.legado.app.help.http.SSLHelper
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Dispatcher
@@ -987,7 +987,7 @@ class ObsoleteUrlFactory(private var client: OkHttpClient) : URLStreamHandlerFac
             }
             // This fails in JDK 9 because OkHttp is unable to extract the trust manager.
             delegate.client = delegate.client.newBuilder()
-                .sslSocketFactory(sslSocketFactory, unsafeTrustManager)
+                .sslSocketFactory(sslSocketFactory, SSLHelper.getTrustManager())
                 .build()
         }
 

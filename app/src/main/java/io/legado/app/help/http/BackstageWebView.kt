@@ -177,7 +177,12 @@ class BackstageWebView(
             handler: SslErrorHandler?,
             error: SslError?
         ) {
-            handler?.proceed()
+            // 根据配置决定是否忽略SSL错误
+            if (io.legado.app.help.config.AppConfig.sslStrictMode) {
+                handler?.cancel()
+            } else {
+                handler?.proceed()
+            }
         }
 
         private inner class EvalJsRunnable(
@@ -307,7 +312,12 @@ class BackstageWebView(
             handler: SslErrorHandler?,
             error: SslError?
         ) {
-            handler?.proceed()
+            // 根据配置决定是否忽略SSL错误
+            if (io.legado.app.help.config.AppConfig.sslStrictMode) {
+                handler?.cancel()
+            } else {
+                handler?.proceed()
+            }
         }
 
         private inner class LoadJsRunnable(

@@ -273,10 +273,10 @@ abstract class BaseReadAloudService : BaseService(),
         }
     }
 
-    @SuppressLint("WakelockTimeout")
     open fun play() {
         if (useWakeLock) {
-            wakeLock.acquire()
+            // 设置10分钟超时，避免无限期持有WakeLock
+            wakeLock.acquire(10 * 60 * 1000L)
             wifiLock?.acquire()
         }
         isRun = true

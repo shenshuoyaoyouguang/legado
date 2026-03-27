@@ -25,7 +25,7 @@ internal const val BUFFER_SIZE = 32 * 1024
 
 val cronetEngine: ExperimentalCronetEngine? by lazy {
     CronetLoader.preDownload()
-    disableCertificateVerify()
+    configureCertificateVerify()
     val builder = ExperimentalCronetEngine.Builder(appCtx).apply {
         if (CronetLoader.install()) {
             setLibraryLoader(CronetLoader)//设置自定义so库加载
@@ -107,7 +107,19 @@ fun buildRequest(request: Request, callback: UrlRequest.Callback): UrlRequest? {
 
 }
 
-private fun disableCertificateVerify() {
+/**
+ * 配置Cronet的证书验证
+ * 根据AppConfig.sslStrictMode决定是否禁用严格证书验证
+ */
+private fun configureCertificateVerify() {
+    // 如果启用了严格模式，保持Cronet默认的安全证书验证
+    if (io.legado.app.help.config.AppConfig.sslStrictMode) {
+        DebugLog.d("Cronet", "使用严格SSL证书验证模式")
+        return
+    }
+    
+    // 兼容模式：替换TrustManager以支持自签名证书
+    DebugLog.d("Cronet", "使用兼容SSL证书验证模式（允许自签名证书）")
     runCatching {
         val sDefaultTrustManager = X509Util::class.java.getDeclaredField("sDefaultTrustManager")
         sDefaultTrustManager.isAccessible = true

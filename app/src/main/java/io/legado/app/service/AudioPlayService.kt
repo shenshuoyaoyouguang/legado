@@ -208,10 +208,10 @@ class AudioPlayService : BaseService(),
     /**
      * 播放音频
      */
-    @SuppressLint("WakelockTimeout")
     private fun play() {
         if (useWakeLock) {
-            wakeLock.acquire()
+            // 设置10分钟超时，避免无限期持有WakeLock
+            wakeLock.acquire(10 * 60 * 1000L)
             wifiLock?.acquire()
         }
         upAudioPlayNotification()
@@ -268,10 +268,10 @@ class AudioPlayService : BaseService(),
     /**
      * 恢复播放
      */
-    @SuppressLint("WakelockTimeout")
     private fun resume() {
         if (useWakeLock) {
-            wakeLock.acquire()
+            // 设置10分钟超时，避免无限期持有WakeLock
+            wakeLock.acquire(10 * 60 * 1000L)
             wifiLock?.acquire()
         }
         try {

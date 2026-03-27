@@ -140,6 +140,12 @@ class App : Application() {
         oldConfig = Configuration(newConfig)
     }
 
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        // 响应系统内存压力，释放Bitmap缓存
+        io.legado.app.model.ImageProvider.onTrimMemory(level)
+    }
+
     /**
      * 尝试在安装了GMS的设备上(GMS或者MicroG)使用GMS内置的Conscrypt
      * 作为首选JCE提供程序，而使Okhttp在低版本Android上

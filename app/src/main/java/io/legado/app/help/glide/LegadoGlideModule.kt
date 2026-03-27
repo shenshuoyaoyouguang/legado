@@ -44,7 +44,8 @@ class LegadoGlideModule : AppGlideModule() {
         val bitmapPool = AsyncRecycleBitmapPool(calculator.bitmapPoolSize)
         builder.setMemorySizeCalculator(calculator)
         builder.setBitmapPool(bitmapPool)
-        builder.setDiskCache(InternalCacheDiskCacheFactory(context, 1024 * 1024 * 1000))
+        // 磁盘缓存从1GB调整为500MB，平衡存储空间与缓存效果
+        builder.setDiskCache(InternalCacheDiskCacheFactory(context, 1024 * 1024 * 500))
         if (!BuildConfig.DEBUG && !AppConfig.recordLog) {
             builder.setLogLevel(Log.ERROR)
         }

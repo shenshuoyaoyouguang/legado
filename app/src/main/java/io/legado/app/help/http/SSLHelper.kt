@@ -3,8 +3,6 @@ package io.legado.app.help.http
 import android.annotation.SuppressLint
 import android.net.http.X509TrustManagerExtensions
 import io.legado.app.utils.printOnDebug
-
-
 import java.io.IOException
 import java.io.InputStream
 import java.security.KeyManagementException
@@ -16,13 +14,21 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import javax.net.ssl.*
 
+/**
+ * SSL证书验证辅助类
+ * 
+ * 支持两种模式：
+ * 1. 严格模式（sslStrictMode=true）：使用系统默认的证书验证，更安全
+ * 2. 兼容模式（sslStrictMode=false，默认）：允许自签名证书和主机名不匹配，适合非HTTPS书源
+ */
 @Suppress("unused")
 object SSLHelper {
 
+    // ==================== 兼容模式实现（不安全但兼容性好）====================
+    
     /**
-     * 为了解决客户端不信任服务器数字证书的问题，
-     * 网络上大部分的解决方案都是让客户端不对证书做任何检查，
-     * 这是一种有很大安全漏洞的办法
+     * 不安全的TrustManager，接受所有证书
+     * 警告：此实现会绕过所有SSL证书验证，仅用于兼容非HTTPS书源
      */
     val unsafeTrustManager: X509TrustManager =
         @SuppressLint("CustomX509TrustManager")
@@ -36,7 +42,7 @@ object SSLHelper {
             @SuppressLint("TrustAllX509TrustManager")
             @Throws(CertificateException::class)
             override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
-                //do nothing，接受任意客户端证书
+                //do nothing，接受任意服务端证书
             }
 
             fun checkServerTrusted(chain: Array<X509Certificate>, authType: String, host: String): List<X509Certificate> {
@@ -54,7 +60,7 @@ object SSLHelper {
 
     val unsafeSSLSocketFactory: SSLSocketFactory by lazy {
         try {
-            val sslContext = SSLContext.getInstance("SSL")
+            val sslContext = SSLContext.getInstance("TLS")
             sslContext.init(null, arrayOf(unsafeTrustManager), SecureRandom())
             sslContext.socketFactory
         } catch (e: Exception) {
@@ -63,11 +69,85 @@ object SSLHelper {
     }
 
     /**
-     * 此类是用于主机名验证的基接口。 在握手期间，如果 URL 的主机名和服务器的标识主机名不匹配，
-     * 则验证机制可以回调此接口的实现程序来确定是否应该允许此连接。策略可以是基于证书的或依赖于其他验证方案。
-     * 当验证 URL 主机名使用的默认规则失败时使用这些回调。如果主机名是可接受的，则返回 true
+     * 不安全的主机名验证器，接受所有主机名
      */
     val unsafeHostnameVerifier: HostnameVerifier = HostnameVerifier { _, _ -> true }
+
+    // ==================== 安全模式实现 ====================
+
+    /**
+     * 安全的TrustManager，使用系统默认证书验证
+     * 推荐用于生产环境
+     */
+    val safeTrustManager: X509TrustManager by lazy {
+        val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        trustManagerFactory.init(null as KeyStore?)
+        trustManagerFactory.trustManagers.filterIsInstance<X509TrustManager>().first()
+            ?: throw IllegalStateException("无法获取系统默认TrustManager")
+    }
+
+    val safeTrustManagerExtensions by lazy {
+        X509TrustManagerExtensions(safeTrustManager)
+    }
+
+    val safeSSLSocketFactory: SSLSocketFactory by lazy {
+        try {
+            val sslContext = SSLContext.getInstance("TLS")
+            sslContext.init(null, arrayOf(safeTrustManager), SecureRandom())
+            sslContext.socketFactory
+        } catch (e: Exception) {
+            throw RuntimeException(e)
+        }
+    }
+
+    /**
+     * 安全的主机名验证器，使用系统默认验证
+     */
+    val safeHostnameVerifier: HostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
+
+    // ==================== 配置驱动的SSL参数获取 ====================
+
+    /**
+     * 根据配置获取TrustManager
+     * @param strictMode 是否使用严格模式，null时从AppConfig读取
+     */
+    @JvmStatic
+    fun getTrustManager(strictMode: Boolean? = null): X509TrustManager {
+        val useStrict = strictMode ?: io.legado.app.help.config.AppConfig.sslStrictMode
+        return if (useStrict) safeTrustManager else unsafeTrustManager
+    }
+
+    /**
+     * 根据配置获取TrustManagerExtensions
+     * @param strictMode 是否使用严格模式，null时从AppConfig读取
+     */
+    @JvmStatic
+    fun getTrustManagerExtensions(strictMode: Boolean? = null): X509TrustManagerExtensions {
+        val useStrict = strictMode ?: io.legado.app.help.config.AppConfig.sslStrictMode
+        return if (useStrict) safeTrustManagerExtensions else unsafeTrustManagerExtensions
+    }
+
+    /**
+     * 根据配置获取SSLSocketFactory
+     * @param strictMode 是否使用严格模式，null时从AppConfig读取
+     */
+    @JvmStatic
+    fun getSSLSocketFactory(strictMode: Boolean? = null): SSLSocketFactory {
+        val useStrict = strictMode ?: io.legado.app.help.config.AppConfig.sslStrictMode
+        return if (useStrict) safeSSLSocketFactory else unsafeSSLSocketFactory
+    }
+
+    /**
+     * 根据配置获取HostnameVerifier
+     * @param strictMode 是否使用严格模式，null时从AppConfig读取
+     */
+    @JvmStatic
+    fun getHostnameVerifier(strictMode: Boolean? = null): HostnameVerifier {
+        val useStrict = strictMode ?: io.legado.app.help.config.AppConfig.sslStrictMode
+        return if (useStrict) safeHostnameVerifier else unsafeHostnameVerifier
+    }
+
+    // ==================== 原有功能保持不变 ====================
 
     class SSLParams {
         lateinit var sSLSocketFactory: SSLSocketFactory
