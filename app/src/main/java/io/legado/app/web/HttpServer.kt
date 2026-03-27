@@ -74,20 +74,22 @@ class HttpServer(port: Int) : NanoHTTPD(port) {
                 Method.GET -> {
                     val parameters = session.parameters
 
-                    returnData = when (uri) {
-                        "/getBookSource" -> BookSourceController.getSource(parameters)
-                        "/getBookSources" -> BookSourceController.sources
-                        "/getBookshelf" -> BookController.bookshelf
-                        "/getChapterList" -> BookController.getChapterList(parameters)
-                        "/refreshToc" -> BookController.refreshToc(parameters)
-                        "/getBookContent" -> BookController.getBookContent(parameters)
-                        "/cover" -> BookController.getCover(parameters)
-                        "/image" -> BookController.getImg(parameters)
-                        "/getReadConfig" -> BookController.getWebReadConfig()
-                        "/getRssSource" -> RssSourceController.getSource(parameters)
-                        "/getRssSources" -> RssSourceController.sources
-                        "/getReplaceRules" -> ReplaceRuleController.allRules
-                        else -> null
+                    returnData = runBlocking {
+                        when (uri) {
+                            "/getBookSource" -> BookSourceController.getSource(parameters)
+                            "/getBookSources" -> BookSourceController.sources
+                            "/getBookshelf" -> BookController.bookshelf
+                            "/getChapterList" -> BookController.getChapterList(parameters)
+                            "/refreshToc" -> BookController.refreshToc(parameters)
+                            "/getBookContent" -> BookController.getBookContent(parameters)
+                            "/cover" -> BookController.getCover(parameters)
+                            "/image" -> BookController.getImg(parameters)
+                            "/getReadConfig" -> BookController.getWebReadConfig()
+                            "/getRssSource" -> RssSourceController.getSource(parameters)
+                            "/getRssSources" -> RssSourceController.sources
+                            "/getReplaceRules" -> ReplaceRuleController.allRules
+                            else -> null
+                        }
                     }
                 }
 

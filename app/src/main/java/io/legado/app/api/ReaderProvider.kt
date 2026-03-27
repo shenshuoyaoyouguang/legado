@@ -14,6 +14,10 @@ import io.legado.app.api.controller.BookController
 import io.legado.app.api.controller.BookSourceController
 import io.legado.app.api.controller.RssSourceController
 import io.legado.app.help.config.AppConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -38,6 +42,15 @@ class ReaderProvider : ContentProvider() {
     companion object {
         private const val TOKEN_PARAM = "token"
         private const val AUTH_TOKEN_HEADER = "auth_token"
+    }
+
+    /**
+     * Provider专用协程作用域
+     * 使用 SupervisorJob 确保一个任务的失败不会影响其他任务
+     * 使用 Dispatchers.IO 避免阻塞主线程或调用方线程
+     */
+    private val providerScope by lazy {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
 
     private val postBodyKey = "json"
@@ -137,7 +150,9 @@ class ReaderProvider : ContentProvider() {
             return null
         }
         
-        runBlocking {
+        // 使用异步协程执行操作，避免阻塞调用线程导致ANR
+        // 由于insert方法返回null，调用方不依赖返回值，可以安全地异步执行
+        providerScope.launch {
             when (RequestCode.entries[sMatcher.match(uri)]) {
                 RequestCode.SaveBookSource -> values?.let {
                     BookSourceController.saveSource(values.getAsString(postBodyKey))
@@ -192,19 +207,21 @@ class ReaderProvider : ContentProvider() {
         uri.getQueryParameter("path")?.let {
             map["path"] = arrayListOf(it)
         }
-        return when (RequestCode.entries[sMatcher.match(uri)]) {
-            RequestCode.GetBookSource -> SimpleCursor(BookSourceController.getSource(map))
-            RequestCode.GetBookSources -> SimpleCursor(BookSourceController.sources)
-            RequestCode.GetRssSource -> SimpleCursor(RssSourceController.getSource(map))
-            RequestCode.GetRssSources -> SimpleCursor(RssSourceController.sources)
-            RequestCode.GetBookshelf -> SimpleCursor(BookController.bookshelf)
-            RequestCode.GetBookContent -> SimpleCursor(BookController.getBookContent(map))
-            RequestCode.RefreshToc -> SimpleCursor(BookController.refreshToc(map))
-            RequestCode.GetChapterList -> SimpleCursor(BookController.getChapterList(map))
-            RequestCode.GetBookCover -> SimpleCursor(BookController.getCover(map))
-            else -> throw IllegalStateException(
-                "Unexpected value: " + RequestCode.entries[sMatcher.match(uri)].name
-            )
+        return runBlocking {
+            when (RequestCode.entries[sMatcher.match(uri)]) {
+                RequestCode.GetBookSource -> SimpleCursor(BookSourceController.getSource(map))
+                RequestCode.GetBookSources -> SimpleCursor(BookSourceController.sources)
+                RequestCode.GetRssSource -> SimpleCursor(RssSourceController.getSource(map))
+                RequestCode.GetRssSources -> SimpleCursor(RssSourceController.sources)
+                RequestCode.GetBookshelf -> SimpleCursor(BookController.bookshelf)
+                RequestCode.GetBookContent -> SimpleCursor(BookController.getBookContent(map))
+                RequestCode.RefreshToc -> SimpleCursor(BookController.refreshToc(map))
+                RequestCode.GetChapterList -> SimpleCursor(BookController.getChapterList(map))
+                RequestCode.GetBookCover -> SimpleCursor(BookController.getCover(map))
+                else -> throw IllegalStateException(
+                    "Unexpected value: " + RequestCode.entries[sMatcher.match(uri)].name
+                )
+            }
         }
     }
 

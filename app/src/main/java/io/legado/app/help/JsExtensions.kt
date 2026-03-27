@@ -109,6 +109,12 @@ interface JsExtensions : JsEncodeUtils {
 
     /**
      * 并发访问网络
+     * 
+     * 注意: 此方法必须使用 runBlocking 阻塞等待协程完成。
+     * 原因: JS引擎(Rhino)需要同步获取返回值，不支持Kotlin协程的挂起机制。
+     * 内部的 Flow.mapAsync 和 getStrResponseAwait() 都是 suspend 函数，
+     * 必须通过 runBlocking 桥接到同步调用。
+     * 安全性: 使用 rhinoContext.coroutineContext 支持取消检测，避免无限阻塞。
      */
     fun ajaxAll(urlList: Array<String>): Array<StrResponse> {
         return runBlocking(context) {
@@ -166,6 +172,14 @@ interface JsExtensions : JsEncodeUtils {
      * @param url html内如果有相对路径的资源不传入url访问不了
      * @param js 用来取返回值的js语句, 没有就返回整个源代码
      * @return 返回js获取的内容
+     * 
+     * 注意: 此方法必须使用 runBlocking 阻塞等待协程完成。
+     * 原因: JS引擎(Rhino)需要同步获取返回值，不支持Kotlin协程的挂起机制。
+     * BackstageWebView.getStrResponse() 是 suspend 函数，必须通过 runBlocking 桥接。
+     * 安全性: 
+     *   1. isMainThread 检查防止在主线程阻塞导致ANR
+     *   2. 使用 rhinoContext.coroutineContext 支持取消检测
+     *   3. BackstageWebView 内部有 60秒超时保护
      */
     fun webView(html: String?, url: String?, js: String?): String? {
         if (isMainThread) {
@@ -184,6 +198,10 @@ interface JsExtensions : JsEncodeUtils {
 
     /**
      * 使用webView获取资源url
+     * 
+     * 注意: 此方法必须使用 runBlocking 阻塞等待协程完成。
+     * 原因: JS引擎(Rhino)需要同步获取返回值，不支持Kotlin协程的挂起机制。
+     * 安全性: isMainThread检查防止ANR，支持取消检测，有60秒超时保护。
      */
     fun webViewGetSource(html: String?, url: String?, js: String?, sourceRegex: String): String? {
         if (isMainThread) {
@@ -203,6 +221,10 @@ interface JsExtensions : JsEncodeUtils {
 
     /**
      * 使用webView获取跳转url
+     * 
+     * 注意: 此方法必须使用 runBlocking 阻塞等待协程完成。
+     * 原因: JS引擎(Rhino)需要同步获取返回值，不支持Kotlin协程的挂起机制。
+     * 安全性: isMainThread检查防止ANR，支持取消检测，有60秒超时保护。
      */
     fun webViewGetOverrideUrl(
         html: String?,
