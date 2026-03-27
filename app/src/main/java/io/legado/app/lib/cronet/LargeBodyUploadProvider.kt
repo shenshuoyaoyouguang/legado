@@ -1,6 +1,7 @@
 package io.legado.app.lib.cronet
 
 import androidx.annotation.Keep
+import io.legado.app.constant.AppLog
 import okhttp3.RequestBody
 import okio.BufferedSource
 import okio.Pipe
@@ -54,7 +55,7 @@ class LargeBodyUploadProvider(
                 body.writeTo(writeSink)
                 writeSink.flush()
             } catch (e: IOException) {
-                e.printStackTrace()
+                AppLog.put("LargeBodyUploadProvider fillBuffer失败", e)
             }
 
         }

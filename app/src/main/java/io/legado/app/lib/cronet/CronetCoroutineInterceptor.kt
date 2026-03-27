@@ -81,8 +81,10 @@ class CronetCoroutineInterceptor(private val cookieJar: CookieJar) : Interceptor
         suspendCancellableCoroutine<Response> { coroutine ->
 
             val callBack = object : AbsCallBack(request, call, readTimeoutMillis) {
+                // 协程模式下使用回调机制处理响应，不使用阻塞等待
+                // 此方法不应被调用，抛出异常以提醒维护者
                 override fun waitForDone(urlRequest: UrlRequest): Response {
-                    TODO("Not yet implemented")
+                    throw UnsupportedOperationException("waitForDone not used in coroutine mode")
                 }
 
                 override fun onError(error: IOException) {

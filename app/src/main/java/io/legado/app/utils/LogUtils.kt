@@ -82,7 +82,6 @@ object LogUtils {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             AppLog.putNotSave("创建fileHandler出错\n$e", e)
             return null
         }

@@ -61,14 +61,14 @@ class WebTileService : TileService() {
                     try {
                         WebService.startForeground(this)
                     } catch (e: ForegroundServiceStartNotAllowedException) {
-                        e.printStackTrace()
+                        e.printOnDebug()
                     }
                     dialog.dismiss()
                 }
                 try {
                     showDialog(dialog)
                 } catch (e: BadTokenException) {
-                    e.printStackTrace()
+                    e.printOnDebug()
                 }
             } else {
                 WebService.start(this)

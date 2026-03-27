@@ -204,7 +204,8 @@ abstract class BaseActivity<VB : ViewBinding>(
         return try {
             super.dispatchTouchEvent(ev)
         } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
+            // 某些设备上的触摸事件处理异常，安全忽略
+            e.printOnDebug()
             false
         }
     }

@@ -53,6 +53,7 @@ import io.legado.app.help.storage.Backup
 import io.legado.app.model.BookCover
 import io.legado.app.utils.ChineseUtils
 import io.legado.app.utils.LogUtils
+import io.legado.app.constant.AppLog
 import io.legado.app.utils.defaultSharedPreferences
 import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.isDebuggable
@@ -177,7 +178,8 @@ class App : Application() {
                 .getMethod("insertProvider", Context::class.java)
                 .invoke(null, gms)
         } catch (e: java.lang.Exception) {
-            e.printStackTrace()
+            // 安全提供者安装失败，使用默认安全配置
+            AppLog.putDebug("安装GMS安全提供者失败，使用默认配置", e)
         }
     }
 
