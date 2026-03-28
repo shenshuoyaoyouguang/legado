@@ -188,8 +188,8 @@ abstract class BaseReadAloudService : BaseService(),
     override fun onDestroy() {
         super.onDestroy()
         if (useWakeLock) {
-            wakeLock.release()
-            wifiLock?.release()
+            if (wakeLock.isHeld) wakeLock.release()
+            wifiLock?.takeIf { it.isHeld }?.release()
         }
         isRun = false
         pause = true
@@ -275,7 +275,7 @@ abstract class BaseReadAloudService : BaseService(),
 
     open fun play() {
         if (useWakeLock) {
-            wakeLock.acquire()
+            wakeLock.acquire(10 * 60 * 1000L)
             wifiLock?.acquire()
         }
         isRun = true
@@ -292,8 +292,8 @@ abstract class BaseReadAloudService : BaseService(),
     @CallSuper
     open fun pauseReadAloud(abandonFocus: Boolean = true) {
         if (useWakeLock) {
-            wakeLock.release()
-            wifiLock?.release()
+            if (wakeLock.isHeld) wakeLock.release()
+            wifiLock?.takeIf { it.isHeld }?.release()
         }
         pause = true
         if (abandonFocus) {

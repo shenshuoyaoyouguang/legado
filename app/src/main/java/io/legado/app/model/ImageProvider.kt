@@ -146,24 +146,13 @@ object ImageProvider {
      */
     fun onTrimMemory(level: Int) {
         when (level) {
-            android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
             android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
-                // 内存紧张或UI隐藏时，释放一半缓存
                 val halfSize = bitmapLruCache.size() / 2
                 if (halfSize > 0) {
                     bitmapLruCache.trimToSize(halfSize)
                 }
             }
-            android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL,
-            android.content.ComponentCallbacks2.TRIM_MEMORY_MODERATE -> {
-                // 内存严重不足时，释放更多缓存
-                val quarterSize = bitmapLruCache.size() / 4
-                if (quarterSize > 0) {
-                    bitmapLruCache.trimToSize(quarterSize)
-                }
-            }
             android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
-                // 系统即将杀掉进程，清空所有缓存
                 bitmapLruCache.evictAll()
             }
         }

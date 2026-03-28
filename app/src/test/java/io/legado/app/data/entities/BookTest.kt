@@ -274,6 +274,23 @@ class BookTest {
         assertEquals("书源名称", bookFromSource.originName)
     }
 
+    @Test
+    fun testBookPropertyConsistency() {
+        val testBook = Book(
+            bookUrl = "https://consistent.example.com/book",
+            name = "一致性测试书籍",
+            author = "作者名",
+            intro = "书籍简介",
+            coverUrl = "https://consistent.example.com/cover.jpg"
+        )
+
+        assertEquals("https://consistent.example.com/book", testBook.bookUrl)
+        assertEquals("一致性测试书籍", testBook.name)
+        assertEquals("作者名", testBook.author)
+        assertEquals("书籍简介", testBook.intro)
+        assertEquals("https://consistent.example.com/cover.jpg", testBook.coverUrl)
+    }
+
     /**
      * 测试完整书籍数据
      */

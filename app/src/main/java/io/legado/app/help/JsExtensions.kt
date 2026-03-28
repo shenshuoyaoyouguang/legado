@@ -117,6 +117,9 @@ interface JsExtensions : JsEncodeUtils {
      * 安全性: 使用 rhinoContext.coroutineContext 支持取消检测，避免无限阻塞。
      */
     fun ajaxAll(urlList: Array<String>): Array<StrResponse> {
+        if (isMainThread) {
+            error("ajaxAll must be called on a background thread")
+        }
         return runBlocking(context) {
             urlList.asFlow().mapAsync(AppConfig.threadCount) { url ->
                 val analyzeUrl = AnalyzeUrl(

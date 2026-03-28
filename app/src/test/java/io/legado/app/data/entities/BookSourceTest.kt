@@ -14,6 +14,11 @@ import org.junit.Test
  */
 class BookSourceTest {
 
+    private companion object {
+        const val DEFAULT_RESPOND_TIME_MS = 180_000L
+        const val NEW_RESPOND_TIME_MS = 60_000L
+    }
+
     private lateinit var bookSource: BookSource
 
     @Before
@@ -39,6 +44,12 @@ class BookSourceTest {
         assertEquals("测试分组", bookSource.bookSourceGroup)
         assertEquals(0, bookSource.bookSourceType)
         assertTrue(bookSource.enabled)
+    }
+
+    @Test
+    fun testBookSourceBasicScopeOperations() {
+        assertNotNull(bookSource.bookSourceUrl)
+        assertNotNull(bookSource.bookSourceName)
     }
 
     /**
@@ -173,6 +184,41 @@ class BookSourceTest {
         assertEquals("a@href", bookSource.ruleSearch!!.bookUrl)
     }
 
+    @Test
+    fun testRuleConfigurationCompleteness() {
+        val completeSource = BookSource(
+            bookSourceUrl = "https://complete.example.com",
+            bookSourceName = "完整书源",
+            ruleSearch = SearchRule(
+                bookList = "class.book",
+                name = "class.name@text",
+                bookUrl = "a@href"
+            ),
+            ruleBookInfo = BookInfoRule(
+                name = "class.title@text",
+                author = "class.author@text",
+                intro = "class.intro@text"
+            ),
+            ruleToc = TocRule(
+                chapterList = "class.chapter-list@li",
+                chapterName = "text",
+                chapterUrl = "a@href"
+            ),
+            ruleContent = ContentRule(
+                content = "class.content@text"
+            )
+        )
+
+        assertNotNull(completeSource.ruleSearch)
+        assertNotNull(completeSource.ruleBookInfo)
+        assertNotNull(completeSource.ruleToc)
+        assertNotNull(completeSource.ruleContent)
+        assertEquals("class.book", completeSource.ruleSearch!!.bookList)
+        assertEquals("class.title@text", completeSource.ruleBookInfo!!.name)
+        assertEquals("class.chapter-list@li", completeSource.ruleToc!!.chapterList)
+        assertEquals("class.content@text", completeSource.ruleContent!!.content)
+    }
+
     /**
      * 测试音频书源类型
      */
@@ -219,10 +265,10 @@ class BookSourceTest {
      */
     @Test
     fun testRespondTime() {
-        assertEquals(180000L, bookSource.respondTime)
-        
-        bookSource.respondTime = 60000L
-        assertEquals(60000L, bookSource.respondTime)
+        assertEquals(DEFAULT_RESPOND_TIME_MS, bookSource.respondTime)
+
+        bookSource.respondTime = NEW_RESPOND_TIME_MS
+        assertEquals(NEW_RESPOND_TIME_MS, bookSource.respondTime)
     }
 
     /**

@@ -43,7 +43,7 @@
 
 ## 项目结构
 
-```
+```text
 legado/
 ├── app/                      # 主应用模块 (Kotlin + Android)
 │   ├── src/main/
@@ -130,13 +130,13 @@ legado/
 
 ### MVVM 架构模式
 
-```
+```text
 View (Activity/Fragment)
     ↕ 数据绑定
 ViewModel
     ↕ LiveData/Flow
 Repository
-    ↕ 
+    ↕
 Data Source (Room DB + Network)
 ```
 
@@ -428,7 +428,7 @@ Data Source (Room DB + Network)
 
 遵循 **Conventional Commits** 规范（参考 `.iflow/IFLOW_GIT.md`）：
 
-```
+```text
 <type>[(scope)]: <summary>
 
 [body]
@@ -445,7 +445,7 @@ Data Source (Room DB + Network)
 - `chore`: 构建过程或辅助工具变动
 
 **示例**:
-```
+```text
 feat(book): 添加 EPUB 3.0 格式支持
 
 fix(source): 修复书源解析空指针异常

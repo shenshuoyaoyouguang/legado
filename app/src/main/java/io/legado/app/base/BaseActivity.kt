@@ -33,6 +33,7 @@ import io.legado.app.utils.applyTint
 import io.legado.app.utils.disableAutoFill
 import io.legado.app.utils.fullScreen
 import io.legado.app.utils.hideSoftInput
+import io.legado.app.utils.printOnDebug
 import io.legado.app.utils.setLightStatusBar
 import io.legado.app.utils.setNavigationBarColorAuto
 import io.legado.app.utils.setStatusBarColorAuto

@@ -188,8 +188,8 @@ class AudioPlayService : BaseService(),
     override fun onDestroy() {
         super.onDestroy()
         if (useWakeLock) {
-            wakeLock.release()
-            wifiLock?.release()
+            if (wakeLock.isHeld) wakeLock.release()
+            wifiLock?.takeIf { it.isHeld }?.release()
         }
         isRun = false
         abandonFocus()
@@ -210,7 +210,7 @@ class AudioPlayService : BaseService(),
      */
     private fun play() {
         if (useWakeLock) {
-            wakeLock.acquire()
+            wakeLock.acquire(10 * 60 * 1000L)
             wifiLock?.acquire()
         }
         upAudioPlayNotification()
@@ -244,8 +244,8 @@ class AudioPlayService : BaseService(),
      */
     private fun pause(abandonFocus: Boolean = true) {
         if (useWakeLock) {
-            wakeLock.release()
-            wifiLock?.release()
+            if (wakeLock.isHeld) wakeLock.release()
+            wifiLock?.takeIf { it.isHeld }?.release()
         }
         try {
             pause = true
@@ -269,7 +269,7 @@ class AudioPlayService : BaseService(),
      */
     private fun resume() {
         if (useWakeLock) {
-            wakeLock.acquire()
+            wakeLock.acquire(10 * 60 * 1000L)
             wifiLock?.acquire()
         }
         try {

@@ -193,9 +193,8 @@ class AnalyzeByJSoupTest {
     @Test
     fun testNestedSelection() {
         val analyzer = AnalyzeByJSoup(docElement)
-        val result = analyzer.getString("#content@div@h1@text")
-        // 由于嵌套结构，需要验证结果
-        assertNotNull(result)
+        val result = analyzer.getString("#content@h1@text")
+        assertEquals("标题文本", result)
     }
 
     /**

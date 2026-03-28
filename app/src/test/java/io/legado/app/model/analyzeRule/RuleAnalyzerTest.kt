@@ -85,8 +85,9 @@ class RuleAnalyzerTest {
     fun testTrimAtSymbol() {
         val analyzer = RuleAnalyzer("@rule1@rule2")
         analyzer.trim()
-        // trim应该移除前置的@
-        assertEquals("rule1@rule2", analyzer.splitRule("@")[0])
+        val rules = analyzer.splitRule("@")
+        assertEquals("rule1", rules[0])
+        assertEquals("rule2", rules[1])
     }
 
     /**

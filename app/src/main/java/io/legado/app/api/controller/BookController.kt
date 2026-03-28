@@ -29,6 +29,7 @@ import io.legado.app.utils.stackTraceStr
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import splitties.init.appCtx
 import java.io.File
 import java.util.WeakHashMap
@@ -182,16 +183,21 @@ object BookController {
             return returnData.setErrorMsg("参数index不能为空, 请指定目录序号")
         }
         val book = appDb.bookDao.getBook(bookUrl)
-        // 等待章节加载，使用协程延迟而非阻塞
-        var chapter = appDb.bookChapterDao.getChapter(bookUrl, index)
-        var wait = 0
-        while (chapter == null && wait < 30) {
-            delay(1000)
-            chapter = appDb.bookChapterDao.getChapter(bookUrl, index)
-            wait++
+        val chapter = withTimeoutOrNull(5_000L) {
+            var result = appDb.bookChapterDao.getChapter(bookUrl, index)
+            var delayMillis = 250L
+            while (result == null) {
+                delay(delayMillis)
+                result = appDb.bookChapterDao.getChapter(bookUrl, index)
+                delayMillis = (delayMillis * 2).coerceAtMost(1_000L)
+            }
+            result
         }
-        if (book == null || chapter == null) {
+        if (book == null) {
             return returnData.setErrorMsg("未找到")
+        }
+        if (chapter == null) {
+            return returnData.setErrorMsg("等待章节加载超时")
         }
         var content: String? = BookHelp.getContent(book, chapter)
         if (content != null) {

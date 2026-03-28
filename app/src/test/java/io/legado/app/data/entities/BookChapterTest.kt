@@ -59,6 +59,17 @@ class BookChapterTest {
         assertNotEquals(bookChapter, differentChapter)
     }
 
+    @Test
+    fun testBookChapterEquality() {
+        val chapter1 = BookChapter(url = "https://same.url", title = "标题1")
+        val chapter2 = BookChapter(url = "https://same.url", title = "标题2")
+        val chapter3 = BookChapter(url = "https://different.url")
+
+        assertEquals(chapter1, chapter2)
+        assertEquals(chapter1.hashCode(), chapter2.hashCode())
+        assertNotEquals(chapter1, chapter3)
+    }
+
     /**
      * 测试primaryStr方法
      */
@@ -209,6 +220,18 @@ class BookChapterTest {
         assertNotNull(chapter.variable)
     }
 
+    @Test
+    fun testVariableEmptyAndMalformedJsonHandling() {
+        val emptyVariableChapter = BookChapter(variable = "")
+        assertTrue(emptyVariableChapter.variableMap.isEmpty())
+        assertEquals("", emptyVariableChapter.getVariable("missing"))
+
+        val malformedVariableChapter = BookChapter(variable = "{bad:}")
+        assertTrue(malformedVariableChapter.variableMap.isEmpty())
+        assertEquals("", malformedVariableChapter.getVariable("missing"))
+        assertEquals("{bad:}", malformedVariableChapter.variable)
+    }
+
     /**
      * 测试getVariable方法命中内存变量
      */
@@ -256,6 +279,30 @@ class BookChapterTest {
         assertEquals("5000", completeChapter.wordCount)
     }
 
+    @Test
+    fun testBookChapterDataSerialization() {
+        val fullChapter = BookChapter(
+            url = "https://test.example.com/chapter/full",
+            title = "完整测试章节",
+            isVolume = false,
+            baseUrl = "https://test.example.com",
+            bookUrl = "https://test.example.com/book",
+            index = 10,
+            isVip = true,
+            isPay = true,
+            resourceUrl = "https://cdn.example.com/audio.mp3",
+            tag = "2024-03-27",
+            wordCount = "5000"
+        )
+
+        assertEquals("https://test.example.com/chapter/full", fullChapter.url)
+        assertEquals("完整测试章节", fullChapter.title)
+        assertEquals(10, fullChapter.index)
+        assertTrue(fullChapter.isVip)
+        assertTrue(fullChapter.isPay)
+        assertEquals("5000", fullChapter.wordCount)
+    }
+
     /**
      * 测试音频章节（带有resourceUrl）
      */
@@ -268,5 +315,18 @@ class BookChapterTest {
         )
         assertNotNull(audioChapter.resourceUrl)
         assertTrue(audioChapter.resourceUrl!!.endsWith(".mp3"))
+    }
+
+    @Test
+    fun testBookChapterTitleFormats() {
+        val normalChapter = BookChapter(title = "第一章 开始")
+        assertEquals("第一章 开始", normalChapter.title)
+
+        val volumeChapter = BookChapter(title = "第一卷", isVolume = true)
+        assertTrue(volumeChapter.isVolume)
+        assertEquals("第一卷", volumeChapter.title)
+
+        val vipChapter = BookChapter(title = "VIP特供章节", isVip = true)
+        assertTrue(vipChapter.isVip)
     }
 }

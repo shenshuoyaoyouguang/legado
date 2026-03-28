@@ -112,14 +112,13 @@ class ReaderProvider : ContentProvider() {
         selection: String?,
         selectionArgs: Array<String>?
     ): Int {
-        if (sMatcher.match(uri) < 0) return -1
-        
-        // 验证权限
         if (!validateAuth(uri)) {
             return -1
         }
-        
-        when (RequestCode.entries[sMatcher.match(uri)]) {
+        val match = sMatcher.match(uri)
+        if (match < 0) return -1
+
+        when (RequestCode.entries[match]) {
             RequestCode.DeleteBookSources -> BookSourceController.deleteSources(selection)
             RequestCode.DeleteRssSources -> RssSourceController.deleteSources(selection)
             else -> throw IllegalStateException(
@@ -132,15 +131,14 @@ class ReaderProvider : ContentProvider() {
     override fun getType(uri: Uri) = throw UnsupportedOperationException("Not yet implemented")
 
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
-        if (sMatcher.match(uri) < 0) return null
-        
-        // 验证权限
         if (!validateAuth(uri, values)) {
             return null
         }
-        
+        val match = sMatcher.match(uri)
+        if (match < 0) return null
+
         runBlocking(Dispatchers.IO) {
-            when (RequestCode.entries[sMatcher.match(uri)]) {
+            when (RequestCode.entries[match]) {
                 RequestCode.SaveBookSource -> values?.let {
                     BookSourceController.saveSource(values.getAsString(postBodyKey))
                 }
@@ -177,13 +175,12 @@ class ReaderProvider : ContentProvider() {
         uri: Uri, projection: Array<String>?, selection: String?,
         selectionArgs: Array<String>?, sortOrder: String?
     ): Cursor? {
-        if (sMatcher.match(uri) < 0) return null
-        
-        // 验证权限
         if (!validateAuth(uri)) {
             return null
         }
-        
+        val match = sMatcher.match(uri)
+        if (match < 0) return null
+
         val map: MutableMap<String, ArrayList<String>> = HashMap()
         uri.getQueryParameter("url")?.let {
             map["url"] = arrayListOf(it)
@@ -194,8 +191,8 @@ class ReaderProvider : ContentProvider() {
         uri.getQueryParameter("path")?.let {
             map["path"] = arrayListOf(it)
         }
-        return runBlocking {
-            when (RequestCode.entries[sMatcher.match(uri)]) {
+        return runBlocking(Dispatchers.IO) {
+            when (RequestCode.entries[match]) {
                 RequestCode.GetBookSource -> SimpleCursor(BookSourceController.getSource(map))
                 RequestCode.GetBookSources -> SimpleCursor(BookSourceController.sources)
                 RequestCode.GetRssSource -> SimpleCursor(RssSourceController.getSource(map))

@@ -133,8 +133,7 @@ class AnalyzeByJSonPathTest {
     fun testInvalidPath() {
         val analyzer = AnalyzeByJSonPath(jsonContent)
         val result = analyzer.getString("$.nonexistent.path")
-        // 应该返回空或抛出异常，取决于实现
-        assertNotNull(result)
+        assertEquals("", result)
     }
 
     /**
@@ -197,10 +196,9 @@ class AnalyzeByJSonPathTest {
     @Test
     fun testPropertyExists() {
         val analyzer = AnalyzeByJSonPath(jsonContent)
-        // 第一本书没有isbn属性
         val result1 = analyzer.getString("$.store.book[0].isbn")
-        // 第三本书有isbn属性
         val result2 = analyzer.getString("$.store.book[2].isbn")
+        assertEquals("", result1)
         assertEquals("0-553-21311-3", result2)
     }
 

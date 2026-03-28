@@ -3,6 +3,7 @@ package io.legado.app.help.config
 import android.content.SharedPreferences
 import android.os.Build
 import io.legado.app.BuildConfig
+import java.io.File
 import io.legado.app.constant.AppConst
 import io.legado.app.constant.PreferKey
 import io.legado.app.data.appDb
@@ -23,6 +24,22 @@ import splitties.init.appCtx
 
 @Suppress("MemberVisibilityCanBePrivate", "ConstPropertyName")
 object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
+
+    private val apiAuthTokenFile by lazy {
+        File(appCtx.noBackupFilesDir, PreferKey.apiAuthToken)
+    }
+
+    private fun migrateLegacyApiAuthToken() {
+        val legacyToken = appCtx.getPrefString(PreferKey.apiAuthToken)
+        if (legacyToken.isNullOrEmpty()) {
+            return
+        }
+        if (!apiAuthTokenFile.exists()) {
+            apiAuthTokenFile.writeText(legacyToken)
+        }
+        appCtx.removePref(PreferKey.apiAuthToken)
+    }
+
     val isCronet = appCtx.getPrefBoolean(PreferKey.cronet)
     var useAntiAlias = appCtx.getPrefBoolean(PreferKey.antiAlias)
     var userAgent: String = getPrefUserAgent()
@@ -769,12 +786,19 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
      * 用于ContentProvider和Web API的身份验证
      */
     var apiAuthToken: String?
-        get() = appCtx.getPrefString(PreferKey.apiAuthToken)
+        get() {
+            migrateLegacyApiAuthToken()
+            return apiAuthTokenFile.takeIf { it.exists() }
+                ?.readText()
+                ?.takeIf { it.isNotBlank() }
+        }
         set(value) {
             if (value.isNullOrEmpty()) {
+                apiAuthTokenFile.delete()
                 appCtx.removePref(PreferKey.apiAuthToken)
             } else {
-                appCtx.putPrefString(PreferKey.apiAuthToken, value)
+                apiAuthTokenFile.writeText(value)
+                appCtx.removePref(PreferKey.apiAuthToken)
             }
         }
 
