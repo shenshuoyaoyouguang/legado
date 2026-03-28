@@ -19,6 +19,7 @@ import androidx.fragment.app.activityViewModels
 import io.legado.app.R
 import io.legado.app.base.BaseFragment
 import io.legado.app.constant.AppConst
+import io.legado.app.constant.AppLog
 import io.legado.app.data.entities.BaseSource
 import io.legado.app.databinding.FragmentWebViewLoginBinding
 import io.legado.app.help.http.CookieStore
@@ -128,12 +129,9 @@ class WebViewLoginFragment : BaseFragment(R.layout.fragment_web_view_login) {
                 handler: SslErrorHandler?,
                 error: SslError?
             ) {
-                // 根据配置决定是否忽略SSL错误
-                if (io.legado.app.help.config.AppConfig.sslStrictMode) {
-                    handler?.cancel()
-                } else {
-                    handler?.proceed()
-                }
+                AppLog.put("WebViewLogin SSL证书异常，已阻止加载")
+                handler?.cancel()
+                binding.root.longSnackbar("SSL证书错误，已阻止继续加载") {}
             }
         }
         binding.webView.webChromeClient = object : WebChromeClient() {

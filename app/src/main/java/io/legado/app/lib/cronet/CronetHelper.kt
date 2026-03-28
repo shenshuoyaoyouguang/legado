@@ -117,9 +117,8 @@ private fun configureCertificateVerify() {
         DebugLog.d("Cronet", "使用严格SSL证书验证模式")
         return
     }
-    
-    // 兼容模式：替换TrustManager以支持自签名证书
-    DebugLog.d("Cronet", "使用兼容SSL证书验证模式（允许自签名证书）")
+
+    DebugLog.d("Cronet", "使用兼容SSL证书验证模式（允许自签名证书）；切换该设置后需重启应用")
     runCatching {
         val sDefaultTrustManager = X509Util::class.java.getDeclaredField("sDefaultTrustManager")
         sDefaultTrustManager.isAccessible = true

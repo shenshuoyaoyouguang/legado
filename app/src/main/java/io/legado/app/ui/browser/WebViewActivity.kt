@@ -23,6 +23,7 @@ import io.legado.app.R
 import io.legado.app.base.VMBaseActivity
 import io.legado.app.constant.AppConst
 import io.legado.app.constant.AppConst.imagePathKey
+import io.legado.app.constant.AppLog
 import io.legado.app.databinding.ActivityWebViewBinding
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.http.CookieStore
@@ -230,6 +231,26 @@ class WebViewActivity : VMBaseActivity<ActivityWebViewBinding, WebViewModel>() {
         }
     }
 
+    private fun handleSslError(handler: SslErrorHandler?, error: SslError?) {
+        val targetUrl = error?.url ?: viewModel.baseUrl
+        AppLog.put("WebView SSL证书异常")
+        if (AppConfig.sslStrictMode) {
+            handler?.cancel()
+            return
+        }
+        alert(
+            title = getString(R.string.draw),
+            message = "检测到证书错误，继续访问可能不安全。\n\nURL: $targetUrl"
+        ) {
+            cancelButton {
+                handler?.cancel()
+            }
+            okButton {
+                handler?.proceed()
+            }
+        }
+    }
+
     override fun finish() {
         SourceVerificationHelp.checkResult(viewModel.sourceOrigin)
         super.finish()
@@ -337,14 +358,7 @@ class WebViewActivity : VMBaseActivity<ActivityWebViewBinding, WebViewModel>() {
             handler: SslErrorHandler?,
             error: SslError?
         ) {
-            // 根据配置决定是否忽略SSL错误
-            if (io.legado.app.help.config.AppConfig.sslStrictMode) {
-                // 严格模式：取消加载，不忽略SSL错误
-                handler?.cancel()
-            } else {
-                // 兼容模式：忽略SSL错误，继续加载
-                handler?.proceed()
-            }
+            handleSslError(handler, error)
         }
 
     }

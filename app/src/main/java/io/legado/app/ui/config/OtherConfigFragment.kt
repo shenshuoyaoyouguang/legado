@@ -193,6 +193,17 @@ class OtherConfigFragment : PreferenceFragment(),
                 DispatchersMonitor.init()
             }
 
+            PreferKey.sslStrictMode -> {
+                view?.post {
+                    context?.alert(
+                        title = getString(R.string.draw),
+                        message = "SSL 严格模式切换后，Cronet 相关请求需要重启应用才会完全生效。"
+                    ) {
+                        okButton()
+                    }
+                }
+            }
+
             PreferKey.processText -> sharedPreferences?.let {
                 setProcessTextEnable(it.getBoolean(key, true))
             }

@@ -13,6 +13,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import io.legado.app.constant.AppConst
+import io.legado.app.constant.AppLog
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.coroutine.Coroutine
@@ -145,6 +146,17 @@ class BackstageWebView(
         }
     }
 
+    private fun rejectSslError(
+        handler: SslErrorHandler?,
+        error: SslError?,
+        source: String
+    ) {
+        val targetUrl = error?.url ?: url ?: "unknown"
+        AppLog.put("$source SSL证书校验失败，已阻止加载")
+        handler?.cancel()
+        callback?.onError(NoStackTraceException("SSL证书校验失败: $targetUrl"))
+    }
+
     private inner class HtmlWebViewClient : WebViewClient() {
 
         private var runnable: EvalJsRunnable? = null
@@ -177,12 +189,7 @@ class BackstageWebView(
             handler: SslErrorHandler?,
             error: SslError?
         ) {
-            // 根据配置决定是否忽略SSL错误
-            if (io.legado.app.help.config.AppConfig.sslStrictMode) {
-                handler?.cancel()
-            } else {
-                handler?.proceed()
-            }
+            rejectSslError(handler, error, "BackstageWebView")
         }
 
         private inner class EvalJsRunnable(
@@ -312,12 +319,7 @@ class BackstageWebView(
             handler: SslErrorHandler?,
             error: SslError?
         ) {
-            // 根据配置决定是否忽略SSL错误
-            if (io.legado.app.help.config.AppConfig.sslStrictMode) {
-                handler?.cancel()
-            } else {
-                handler?.proceed()
-            }
+            rejectSslError(handler, error, "BackstageWebView")
         }
 
         private inner class LoadJsRunnable(

@@ -24,6 +24,11 @@ import java.util.concurrent.TimeUnit
 private val proxyClientCache: ConcurrentHashMap<String, OkHttpClient> by lazy {
     ConcurrentHashMap()
 }
+private val clientCacheLock = Any()
+@Volatile private var okHttpClientCache: OkHttpClient? = null
+@Volatile private var okHttpClientCacheStrictMode: Boolean? = null
+@Volatile private var okHttpClientMangaCache: OkHttpClient? = null
+@Volatile private var okHttpClientMangaCacheStrictMode: Boolean? = null
 
 val cookieJar by lazy {
     object : CookieJar {
@@ -47,7 +52,7 @@ val cookieJar by lazy {
     }
 }
 
-val okHttpClient: OkHttpClient by lazy {
+private fun buildOkHttpClient(strictMode: Boolean): OkHttpClient {
     val specs = arrayListOf(
         ConnectionSpec.MODERN_TLS,
         ConnectionSpec.COMPATIBLE_TLS,
@@ -60,25 +65,28 @@ val okHttpClient: OkHttpClient by lazy {
         .readTimeout(60, TimeUnit.SECONDS)
         .callTimeout(60, TimeUnit.SECONDS)
         //.cookieJar(cookieJar = cookieJar)
-        .sslSocketFactory(SSLHelper.getSSLSocketFactory(), SSLHelper.getTrustManager())
+        .sslSocketFactory(
+            SSLHelper.getSSLSocketFactory(strictMode),
+            SSLHelper.getTrustManager(strictMode)
+        )
         .retryOnConnectionFailure(true)
-        .hostnameVerifier(SSLHelper.getHostnameVerifier())
+        .hostnameVerifier(SSLHelper.getHostnameVerifier(strictMode))
         .connectionSpecs(specs)
         .followRedirects(true)
         .followSslRedirects(true)
         .addInterceptor(OkHttpExceptionInterceptor)
         .addInterceptor { chain ->
             val request = chain.request()
-            val builder = request.newBuilder()
+            val requestBuilder = request.newBuilder()
             if (request.header(AppConst.UA_NAME) == null) {
-                builder.addHeader(AppConst.UA_NAME, AppConfig.userAgent)
+                requestBuilder.addHeader(AppConst.UA_NAME, AppConfig.userAgent)
             } else if (request.header(AppConst.UA_NAME) == "null") {
-                builder.removeHeader(AppConst.UA_NAME)
+                requestBuilder.removeHeader(AppConst.UA_NAME)
             }
-            builder.addHeader("Keep-Alive", "300")
-            builder.addHeader("Connection", "Keep-Alive")
-            builder.addHeader("Cache-Control", "no-cache")
-            chain.proceed(builder.build())
+            requestBuilder.addHeader("Keep-Alive", "300")
+            requestBuilder.addHeader("Connection", "Keep-Alive")
+            requestBuilder.addHeader("Cache-Control", "no-cache")
+            chain.proceed(requestBuilder.build())
         }
         .addNetworkInterceptor { chain ->
             var request = chain.request()
@@ -105,7 +113,7 @@ val okHttpClient: OkHttpClient by lazy {
         }
     }
     builder.addInterceptor(DecompressInterceptor)
-    builder.build().apply {
+    return builder.build().apply {
         val okHttpName =
             OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
         val executor = dispatcher.executorService as ThreadPoolExecutor
@@ -119,25 +127,66 @@ val okHttpClient: OkHttpClient by lazy {
     }
 }
 
-val okHttpClientManga by lazy {
-    okHttpClient.newBuilder().run {
-        val interceptors = interceptors()
-        interceptors.add(1) { chain ->
-            val request = chain.request()
-            val response = chain.proceed(request)
-            val url = request.url.toString()
-            response.newBuilder()
-                .body(ProgressResponseBody(url, LISTENER, response.body))
-                .build()
-        }
-        interceptors.add(1) { chain ->
-            ReadManga.rateLimiter.withLimitBlocking {
-                chain.proceed(chain.request())
+val okHttpClient: OkHttpClient
+    get() {
+        val strictMode = AppConfig.sslStrictMode
+        okHttpClientCache?.let {
+            if (okHttpClientCacheStrictMode == strictMode) {
+                return it
             }
         }
-        build()
+        synchronized(clientCacheLock) {
+            okHttpClientCache?.let {
+                if (okHttpClientCacheStrictMode == strictMode) {
+                    return it
+                }
+            }
+            proxyClientCache.clear()
+            okHttpClientMangaCache = null
+            okHttpClientMangaCacheStrictMode = null
+            return buildOkHttpClient(strictMode).also {
+                okHttpClientCache = it
+                okHttpClientCacheStrictMode = strictMode
+            }
+        }
     }
-}
+
+val okHttpClientManga: OkHttpClient
+    get() {
+        val strictMode = AppConfig.sslStrictMode
+        okHttpClientMangaCache?.let {
+            if (okHttpClientMangaCacheStrictMode == strictMode) {
+                return it
+            }
+        }
+        synchronized(clientCacheLock) {
+            okHttpClientMangaCache?.let {
+                if (okHttpClientMangaCacheStrictMode == strictMode) {
+                    return it
+                }
+            }
+            return okHttpClient.newBuilder().run {
+                val interceptors = interceptors()
+                interceptors.add(1) { chain ->
+                    val request = chain.request()
+                    val response = chain.proceed(request)
+                    val url = request.url.toString()
+                    response.newBuilder()
+                        .body(ProgressResponseBody(url, LISTENER, response.body))
+                        .build()
+                }
+                interceptors.add(1) { chain ->
+                    ReadManga.rateLimiter.withLimitBlocking {
+                        chain.proceed(chain.request())
+                    }
+                }
+                build()
+            }.also {
+                okHttpClientMangaCache = it
+                okHttpClientMangaCacheStrictMode = strictMode
+            }
+        }
+    }
 
 /**
  * 缓存代理okHttp
