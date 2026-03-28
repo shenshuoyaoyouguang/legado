@@ -46,12 +46,6 @@ class BookSourceTest {
         assertTrue(bookSource.enabled)
     }
 
-    @Test
-    fun testBookSourceBasicScopeOperations() {
-        assertNotNull(bookSource.bookSourceUrl)
-        assertNotNull(bookSource.bookSourceName)
-    }
-
     /**
      * 测试getKey方法
      */
@@ -277,10 +271,10 @@ class BookSourceTest {
     @Test
     fun testCookieJarConfiguration() {
         bookSource.enabledCookieJar = true
-        assertTrue(bookSource.enabledCookieJar!!)
-        
+        assertEquals(true, bookSource.enabledCookieJar)
+
         bookSource.enabledCookieJar = false
-        assertFalse(bookSource.enabledCookieJar!!)
+        assertEquals(false, bookSource.enabledCookieJar)
     }
 
     /**

@@ -37,9 +37,6 @@ import java.util.concurrent.TimeUnit
 
 object BookController {
 
-    private lateinit var book: Book
-    private var bookSource: BookSource? = null
-    private var bookUrl: String = ""
     private val defaultCoverCache by lazy { WeakHashMap<Drawable, Bitmap>() }
 
     /**
@@ -105,15 +102,12 @@ object BookController {
         val src = parameters["path"]?.firstOrNull()
             ?: return returnData.setErrorMsg("图片链接为空")
         val width = parameters["width"]?.firstOrNull()?.toInt() ?: 640
-        if (this.bookUrl != bookUrl) {
-            this.book = appDb.bookDao.getBook(bookUrl)
-                ?: return returnData.setErrorMsg("bookUrl不对")
-            this.bookSource = appDb.bookSourceDao.getBookSource(book.origin)
-        }
-        this.bookUrl = bookUrl
+        val currentBook = appDb.bookDao.getBook(bookUrl)
+            ?: return returnData.setErrorMsg("bookUrl不对")
+        val currentBookSource = appDb.bookSourceDao.getBookSource(currentBook.origin)
         val bitmap = withContext(Dispatchers.IO) {
-            ImageProvider.cacheImage(book, src, bookSource)
-            ImageProvider.getImage(book, src, width)
+            ImageProvider.cacheImage(currentBook, src, currentBookSource)
+            ImageProvider.getImage(currentBook, src, width)
         }
         return returnData.setData(bitmap)
     }
@@ -183,6 +177,7 @@ object BookController {
             return returnData.setErrorMsg("参数index不能为空, 请指定目录序号")
         }
         val book = appDb.bookDao.getBook(bookUrl)
+            ?: return returnData.setErrorMsg("未找到")
         val chapter = withTimeoutOrNull(5_000L) {
             var result = appDb.bookChapterDao.getChapter(bookUrl, index)
             var delayMillis = 250L
@@ -192,9 +187,6 @@ object BookController {
                 delayMillis = (delayMillis * 2).coerceAtMost(1_000L)
             }
             result
-        }
-        if (book == null) {
-            return returnData.setErrorMsg("未找到")
         }
         if (chapter == null) {
             return returnData.setErrorMsg("等待章节加载超时")

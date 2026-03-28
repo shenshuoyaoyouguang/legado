@@ -197,7 +197,7 @@ class OtherConfigFragment : PreferenceFragment(),
                 view?.post {
                     context?.alert(
                         title = getString(R.string.draw),
-                        message = "SSL 严格模式切换后，Cronet 相关请求需要重启应用才会完全生效。"
+                        message = getString(R.string.ssl_strict_mode_change_notice)
                     ) {
                         okButton()
                     }

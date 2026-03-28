@@ -29,7 +29,13 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
         File(appCtx.noBackupFilesDir, PreferKey.apiAuthToken)
     }
 
+    private var apiAuthTokenMigrated = false
+
     private fun migrateLegacyApiAuthToken() {
+        if (apiAuthTokenMigrated) {
+            return
+        }
+        apiAuthTokenMigrated = true
         val legacyToken = appCtx.getPrefString(PreferKey.apiAuthToken)
         if (legacyToken.isNullOrEmpty()) {
             return
@@ -788,9 +794,13 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
     var apiAuthToken: String?
         get() {
             migrateLegacyApiAuthToken()
-            return apiAuthTokenFile.takeIf { it.exists() }
-                ?.readText()
-                ?.takeIf { it.isNotBlank() }
+            return try {
+                apiAuthTokenFile.takeIf { it.exists() }
+                    ?.readText()
+                    ?.takeIf { it.isNotBlank() }
+            } catch (e: Exception) {
+                null
+            }
         }
         set(value) {
             if (value.isNullOrEmpty()) {

@@ -1232,9 +1232,13 @@
     <string name="sure_cache_book">是否确认开始缓存？</string>
     <string name="auto_check_new_backup_t">自动检查新备份</string>
     <string name="auto_check_new_backup_s">打开软件时检查是否有新备份，有新备份时提示是否更新</string>
-    <string name="sys_image_picker">系统图片选择器</string>
+    <string name="sys_image_picker">System image picker</string>
 
-    <!-- 安全配置权限 -->
+    <!-- Security configuration permissions -->
     <string name="permission_reader_provider_label">Legado Reader Provider</string>
     <string name="permission_reader_provider_desc">Access Legado\'s book data and reading progress through ContentProvider API</string>
+
+    <!-- SSL safety prompt -->
+    <string name="ssl_error_detected">Detected certificate error, continuing to visit may be unsafe.</string>
+    <string name="ssl_strict_mode_change_notice">After SSL strict mode is switched, Cronet-related requests will not fully take effect until the application is restarted.</string>
 </resources>

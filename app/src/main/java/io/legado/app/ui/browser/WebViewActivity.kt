@@ -240,13 +240,16 @@ class WebViewActivity : VMBaseActivity<ActivityWebViewBinding, WebViewModel>() {
         }
         alert(
             title = getString(R.string.draw),
-            message = "检测到证书错误，继续访问可能不安全。\n\nURL: $targetUrl"
+            message = getString(R.string.ssl_error_detected) + "\n\nURL: $targetUrl"
         ) {
             cancelButton {
                 handler?.cancel()
             }
             okButton {
                 handler?.proceed()
+            }
+            onCancelled {
+                handler?.cancel()
             }
         }
     }

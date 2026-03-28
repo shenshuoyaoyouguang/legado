@@ -134,6 +134,7 @@ class AnalyzeRuleSplitTest {
         assertEquals(3, rules.size)
         assertEquals(AnalyzeRule.Mode.Js, rules[0].mode)
         assertEquals("a", rules[0].rule)
+        assertEquals(AnalyzeRule.Mode.Default, rules[1].mode)
         assertEquals("middle", rules[1].rule)
         assertEquals(AnalyzeRule.Mode.Js, rules[2].mode)
         assertEquals("b", rules[2].rule)

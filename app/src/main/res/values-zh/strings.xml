@@ -1235,4 +1235,8 @@
     <!-- 安全配置权限 -->
     <string name="permission_reader_provider_label">Legado数据接口</string>
     <string name="permission_reader_provider_desc">通过ContentProvider API访问Legado的书籍数据和阅读进度</string>
+
+    <!-- SSL安全提示 -->
+    <string name="ssl_error_detected">检测到证书错误，继续访问可能不安全。</string>
+    <string name="ssl_strict_mode_change_notice">SSL 严格模式切换后，Cronet 相关请求需要重启应用才会完全生效。</string>
 </resources>
