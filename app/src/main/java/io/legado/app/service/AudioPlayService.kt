@@ -210,8 +210,7 @@ class AudioPlayService : BaseService(),
      */
     private fun play() {
         if (useWakeLock) {
-            // 设置10分钟超时，避免无限期持有WakeLock
-            wakeLock.acquire(10 * 60 * 1000L)
+            wakeLock.acquire()
             wifiLock?.acquire()
         }
         upAudioPlayNotification()
@@ -270,8 +269,7 @@ class AudioPlayService : BaseService(),
      */
     private fun resume() {
         if (useWakeLock) {
-            // 设置10分钟超时，避免无限期持有WakeLock
-            wakeLock.acquire(10 * 60 * 1000L)
+            wakeLock.acquire()
             wifiLock?.acquire()
         }
         try {

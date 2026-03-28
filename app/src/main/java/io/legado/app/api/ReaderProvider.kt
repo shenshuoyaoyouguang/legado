@@ -13,11 +13,9 @@ import com.google.gson.Gson
 import io.legado.app.api.controller.BookController
 import io.legado.app.api.controller.BookSourceController
 import io.legado.app.api.controller.RssSourceController
+import io.legado.app.constant.AppLog
 import io.legado.app.help.config.AppConfig
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -44,15 +42,6 @@ class ReaderProvider : ContentProvider() {
         private const val AUTH_TOKEN_HEADER = "auth_token"
     }
 
-    /**
-     * Provider专用协程作用域
-     * 使用 SupervisorJob 确保一个任务的失败不会影响其他任务
-     * 使用 Dispatchers.IO 避免阻塞主线程或调用方线程
-     */
-    private val providerScope by lazy {
-        CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    }
-
     private val postBodyKey = "json"
     private val sMatcher by lazy {
         UriMatcher(UriMatcher.NO_MATCH).apply {
@@ -62,11 +51,11 @@ class ReaderProvider : ContentProvider() {
                 addURI(authority, "bookSources/delete", RequestCode.DeleteBookSources.ordinal)
                 addURI(authority, "bookSource/query", RequestCode.GetBookSource.ordinal)
                 addURI(authority, "bookSources/query", RequestCode.GetBookSources.ordinal)
-                addURI(authority, "rssSource/insert", RequestCode.SaveBookSource.ordinal)
-                addURI(authority, "rssSources/insert", RequestCode.SaveBookSources.ordinal)
-                addURI(authority, "rssSources/delete", RequestCode.DeleteBookSources.ordinal)
-                addURI(authority, "rssSource/query", RequestCode.GetBookSource.ordinal)
-                addURI(authority, "rssSources/query", RequestCode.GetBookSources.ordinal)
+                addURI(authority, "rssSource/insert", RequestCode.SaveRssSource.ordinal)
+                addURI(authority, "rssSources/insert", RequestCode.SaveRssSources.ordinal)
+                addURI(authority, "rssSources/delete", RequestCode.DeleteRssSources.ordinal)
+                addURI(authority, "rssSource/query", RequestCode.GetRssSource.ordinal)
+                addURI(authority, "rssSources/query", RequestCode.GetRssSources.ordinal)
                 addURI(authority, "book/insert", RequestCode.SaveBook.ordinal)
                 addURI(authority, "books/query", RequestCode.GetBookshelf.ordinal)
                 addURI(authority, "book/refreshToc/query", RequestCode.RefreshToc.ordinal)
@@ -99,8 +88,8 @@ class ReaderProvider : ContentProvider() {
 
         val expectedToken = AppConfig.apiAuthToken
         if (expectedToken.isNullOrBlank()) {
-            // 启用了认证但未设置token，允许访问（兼容性考虑）
-            return true
+            AppLog.put("ReaderProvider API 认证已启用，但未配置 Token，拒绝本次请求")
+            return false
         }
 
         // 从URI参数中获取token
@@ -132,7 +121,7 @@ class ReaderProvider : ContentProvider() {
         
         when (RequestCode.entries[sMatcher.match(uri)]) {
             RequestCode.DeleteBookSources -> BookSourceController.deleteSources(selection)
-            RequestCode.DeleteRssSources -> BookSourceController.deleteSources(selection)
+            RequestCode.DeleteRssSources -> RssSourceController.deleteSources(selection)
             else -> throw IllegalStateException(
                 "Unexpected value: " + RequestCode.entries[sMatcher.match(uri)].name
             )
@@ -150,9 +139,7 @@ class ReaderProvider : ContentProvider() {
             return null
         }
         
-        // 使用异步协程执行操作，避免阻塞调用线程导致ANR
-        // 由于insert方法返回null，调用方不依赖返回值，可以安全地异步执行
-        providerScope.launch {
+        runBlocking(Dispatchers.IO) {
             when (RequestCode.entries[sMatcher.match(uri)]) {
                 RequestCode.SaveBookSource -> values?.let {
                     BookSourceController.saveSource(values.getAsString(postBodyKey))

@@ -275,8 +275,7 @@ abstract class BaseReadAloudService : BaseService(),
 
     open fun play() {
         if (useWakeLock) {
-            // 设置10分钟超时，避免无限期持有WakeLock
-            wakeLock.acquire(10 * 60 * 1000L)
+            wakeLock.acquire()
             wifiLock?.acquire()
         }
         isRun = true
