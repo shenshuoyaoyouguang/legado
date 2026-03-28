@@ -526,7 +526,7 @@ class ReadRssActivity : VMBaseActivity<ActivityRssReadBinding, ReadRssViewModel>
         ) {
             AppLog.put("ReadRss SSL证书异常，已阻止加载")
             handler?.cancel()
-            binding.root.longSnackbar("SSL证书错误，已阻止继续加载") {}
+            binding.root.longSnackbar("SSL证书错误，已阻止继续加载")
         }
 
     }

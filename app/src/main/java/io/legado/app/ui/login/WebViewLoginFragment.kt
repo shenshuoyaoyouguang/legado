@@ -131,7 +131,7 @@ class WebViewLoginFragment : BaseFragment(R.layout.fragment_web_view_login) {
             ) {
                 AppLog.put("WebViewLogin SSL证书异常，已阻止加载")
                 handler?.cancel()
-                binding.root.longSnackbar("SSL证书错误，已阻止继续加载") {}
+                binding.root.longSnackbar("SSL证书错误，已阻止继续加载")
             }
         }
         binding.webView.webChromeClient = object : WebChromeClient() {
