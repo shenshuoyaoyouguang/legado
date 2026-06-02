@@ -39,12 +39,26 @@ object ImageProvider {
      * filePath bitmap
      */
     private const val M = 1024 * 1024
+    
+    /**
+     * 默认缓存大小：50MB
+     */
+    private const val DEFAULT_CACHE_SIZE_MB = 50
+    
+    /**
+     * 最大缓存大小上限：128MB（原256MB过大，可能导致OOM）
+     */
+    private const val MAX_CACHE_SIZE_MB = 128
+    
     val cacheSize: Int
         get() {
-            if (AppConfig.bitmapCacheSize !in 1..1024) {
-                AppConfig.bitmapCacheSize = 50
+            val configuredSize = AppConfig.bitmapCacheSize
+            // 限制缓存大小在1-128MB范围内
+            val validSize = configuredSize.coerceIn(1, MAX_CACHE_SIZE_MB)
+            if (configuredSize != validSize) {
+                AppConfig.bitmapCacheSize = validSize
             }
-            return AppConfig.bitmapCacheSize * M
+            return validSize * M
         }
 
     val bitmapLruCache = BitmapLruCache()
@@ -102,19 +116,45 @@ object ImageProvider {
         return bitmap
     }
 
+    /**
+     * 确保缓存大小合理，防止内存溢出
+     * 优化：限制最大扩容到128MB（原256MB过大）
+     */
     private fun ensureLruCacheSize(bitmap: Bitmap) {
         val lruMaxSize = bitmapLruCache.maxSize()
         val lruSize = bitmapLruCache.size()
         val byteCount = bitmap.byteCount
+        
+        // 计算新的缓存大小，限制最大为MAX_CACHE_SIZE_MB
+        val maxSizeBytes = MAX_CACHE_SIZE_MB * M
         val size = if (byteCount > lruMaxSize) {
-            min(256 * M, (byteCount * 1.3).toInt())
+            min(maxSizeBytes, (byteCount * 1.3).toInt())
         } else if (lruSize + byteCount > lruMaxSize && bitmapLruCache.count < 5) {
-            min(256 * M, (lruSize + byteCount * 1.3).toInt())
+            min(maxSizeBytes, (lruSize + byteCount * 1.3).toInt())
         } else {
             lruMaxSize
         }
         if (size > lruMaxSize) {
             bitmapLruCache.resize(size)
+        }
+    }
+    
+    /**
+     * 响应系统内存压力，释放部分缓存
+     * 在App的onTrimMemory回调中调用此方法
+     * @param level trim级别，参见ComponentCallbacks2
+     */
+    fun onTrimMemory(level: Int) {
+        when (level) {
+            android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
+                val halfSize = bitmapLruCache.size() / 2
+                if (halfSize > 0) {
+                    bitmapLruCache.trimToSize(halfSize)
+                }
+            }
+            android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
+                bitmapLruCache.evictAll()
+            }
         }
     }
 

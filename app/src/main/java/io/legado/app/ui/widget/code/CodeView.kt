@@ -14,6 +14,7 @@ import android.text.style.ReplacementSpan
 import android.util.AttributeSet
 import androidx.annotation.ColorInt
 import io.legado.app.ui.widget.text.ScrollMultiAutoCompleteTextView
+import io.legado.app.utils.printOnDebug
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -225,7 +226,7 @@ class CodeView @JvmOverloads constructor(context: Context, attrs: AttributeSet? 
             highlightErrorLines(editable)
             highlightSyntax(editable)
         } catch (e: IllegalStateException) {
-            e.printStackTrace()
+            e.printOnDebug()
         }
         return editable
     }

@@ -129,7 +129,6 @@ class TextChapterLayout(
                 listener = l
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             AppLog.put("调用布局进度监听回调出错\n${e.localizedMessage}", e)
         }
     }
@@ -156,7 +155,6 @@ class TextChapterLayout(
         try {
             listener?.onLayoutPageCompleted(textPages.lastIndex, textPage)
         } catch (e: Exception) {
-            e.printStackTrace()
             AppLog.put("调用布局进度监听回调出错\n${e.localizedMessage}", e)
         }
     }
@@ -166,7 +164,6 @@ class TextChapterLayout(
         try {
             listener?.onLayoutCompleted()
         } catch (e: Exception) {
-            e.printStackTrace()
             AppLog.put("调用布局进度监听回调出错\n${e.localizedMessage}", e)
         } finally {
             listener = null
@@ -182,7 +179,6 @@ class TextChapterLayout(
         try {
             listener?.onLayoutException(e)
         } catch (e: Exception) {
-            e.printStackTrace()
             AppLog.put("调用布局进度监听回调出错\n${e.localizedMessage}", e)
         } finally {
             listener = null

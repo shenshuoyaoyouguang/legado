@@ -11,6 +11,7 @@ import io.legado.app.lib.mobi.entities.Skeleton
 import io.legado.app.lib.mobi.entities.TOC
 import io.legado.app.lib.mobi.utils.readString
 import io.legado.app.lib.mobi.utils.readUInt32
+import io.legado.app.utils.printOnDebug
 import java.nio.ByteBuffer
 import java.util.Locale
 
@@ -252,7 +253,7 @@ class KF8Book(
                 fdstTableEnds!![i] = fdstBuffer.readUInt32()
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            e.printOnDebug()
         }
     }
 

@@ -193,6 +193,17 @@ class OtherConfigFragment : PreferenceFragment(),
                 DispatchersMonitor.init()
             }
 
+            PreferKey.sslStrictMode -> {
+                view?.post {
+                    context?.alert(
+                        title = getString(R.string.draw),
+                        message = getString(R.string.ssl_strict_mode_change_notice)
+                    ) {
+                        okButton()
+                    }
+                }
+            }
+
             PreferKey.processText -> sharedPreferences?.let {
                 setProcessTextEnable(it.getBoolean(key, true))
             }

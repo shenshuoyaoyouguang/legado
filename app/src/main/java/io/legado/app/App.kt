@@ -53,6 +53,7 @@ import io.legado.app.help.storage.Backup
 import io.legado.app.model.BookCover
 import io.legado.app.utils.ChineseUtils
 import io.legado.app.utils.LogUtils
+import io.legado.app.constant.AppLog
 import io.legado.app.utils.defaultSharedPreferences
 import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.isDebuggable
@@ -120,6 +121,8 @@ class App : Application() {
             }
             //调整排序序号
             SourceHelp.adjustSortNumber()
+            //初始化WebDAV配置
+            AppWebDav.upConfig()
             //同步阅读记录
             if (AppConfig.syncBookProgress) {
                 AppWebDav.downloadAllBookProgress()
@@ -138,6 +141,12 @@ class App : Application() {
             applyDayNight(this)
         }
         oldConfig = Configuration(newConfig)
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        // 响应系统内存压力，释放Bitmap缓存
+        io.legado.app.model.ImageProvider.onTrimMemory(level)
     }
 
     /**
@@ -169,7 +178,8 @@ class App : Application() {
                 .getMethod("insertProvider", Context::class.java)
                 .invoke(null, gms)
         } catch (e: java.lang.Exception) {
-            e.printStackTrace()
+            // 安全提供者安装失败，使用默认安全配置
+            AppLog.putDebug("安装GMS安全提供者失败，使用默认配置", e)
         }
     }
 

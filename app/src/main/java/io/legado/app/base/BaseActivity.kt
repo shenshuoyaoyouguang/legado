@@ -33,6 +33,7 @@ import io.legado.app.utils.applyTint
 import io.legado.app.utils.disableAutoFill
 import io.legado.app.utils.fullScreen
 import io.legado.app.utils.hideSoftInput
+import io.legado.app.utils.printOnDebug
 import io.legado.app.utils.setLightStatusBar
 import io.legado.app.utils.setNavigationBarColorAuto
 import io.legado.app.utils.setStatusBarColorAuto
@@ -204,7 +205,8 @@ abstract class BaseActivity<VB : ViewBinding>(
         return try {
             super.dispatchTouchEvent(ev)
         } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
+            // 某些设备上的触摸事件处理异常，安全忽略
+            e.printOnDebug()
             false
         }
     }

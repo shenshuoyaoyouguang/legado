@@ -3,7 +3,6 @@ package io.legado.app.data
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import android.os.Build
-import android.util.Log
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
@@ -52,6 +51,7 @@ import io.legado.app.data.entities.SearchBook
 import io.legado.app.data.entities.SearchKeyword
 import io.legado.app.data.entities.Server
 import io.legado.app.data.entities.TxtTocRule
+import io.legado.app.constant.AppLog
 import io.legado.app.help.DefaultData
 import org.intellij.lang.annotations.Language
 import splitties.init.appCtx
@@ -148,15 +148,15 @@ abstract class AppDatabase : RoomDatabase() {
                 // 只在 API 级别 23 (Marshmallow) 及以上版本尝试设置区域设置
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     try {
-                        Log.d("AppDatabaseCallback", "准备 设置 locale for API ${Build.VERSION.SDK_INT}...")
+                        AppLog.putDebug("AppDatabaseCallback: 准备设置 locale for API ${Build.VERSION.SDK_INT}")
                         db.setLocale(Locale.CHINESE)
                         // 在 21 上报错，但无法拦截
-                        Log.d("AppDatabaseCallback", "成功 设置 locale for API ${Build.VERSION.SDK_INT}.")
+                        AppLog.putDebug("AppDatabaseCallback: 成功设置 locale for API ${Build.VERSION.SDK_INT}")
                     } catch (e: Exception) {
-                        Log.e("AppDatabaseCallback", "错误 设置 locale in onCreate for API ${Build.VERSION.SDK_INT}", e)
+                        AppLog.put("AppDatabaseCallback: 设置 locale 失败 for API ${Build.VERSION.SDK_INT}", e)
                     }
                 } else {
-                    Log.i("AppDatabaseCallback", "跳过 setLocale for API ${Build.VERSION.SDK_INT} (below M).")
+                    AppLog.putDebug("AppDatabaseCallback: 跳过 setLocale for API ${Build.VERSION.SDK_INT} (below M)")
                 }
             }
 

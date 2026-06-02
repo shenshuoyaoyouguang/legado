@@ -186,4 +186,9 @@ object PreferKey {
     const val showReadTitleAddition = "showReadTitleAddition"
     const val readBarStyleFollowPage = "readBarStyleFollowPage"
     const val contentSelectSpeakMod = "contentReadAloudMod"
+
+    // 安全配置
+    const val sslStrictMode = "sslStrictMode"
+    const val apiAuthEnabled = "apiAuthEnabled"
+    const val apiAuthToken = "apiAuthToken"
 }

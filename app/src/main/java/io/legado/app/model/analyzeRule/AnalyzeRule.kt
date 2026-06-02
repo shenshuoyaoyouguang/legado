@@ -841,14 +841,30 @@ class AnalyzeRule(
 
     /**
      * 重新获取book
+     *
+     * **技术说明 - runBlocking 使用原因**:
+     * 此方法从 Rhino JS 引擎脚本中调用，JS 引擎不支持 Kotlin 协程，
+     * 但需要调用 suspend 函数。使用 runBlocking 桥接同步 JS 调用到异步 Kotlin 代码。
+     *
+     * **注意事项**:
+     * 1. 仅在 preUpdateJs 规则中可调用
+     * 2. 已在协程上下文中调用（由 WebBook.runPreUpdateJs 触发）
+     * 3. 使用 coroutineContext 确保在正确的协程上下文中执行
+     * 4. 超时设置为30分钟，适用于需要更新大量书籍的场景
+     *
+     * @see WebBook.runPreUpdateJs
+     * @see io.legado.app.model.analyzeRule.AnalyzeRule.evalJS
      */
+    @Suppress("BlockingMethodInNonBlockingContext")
     fun reGetBook() {
         if (!preUpdateJs) throw NoStackTraceException("只能在 preUpdateJs 中调用")
         val bookSource = source as? BookSource
         val book = book as? Book
         if (bookSource == null || book == null) return
+        // 注意：runBlocking 用于 JS 脚本桥接，JS 引擎不支持协程
+        // 调用链: suspend WebBook.runPreUpdateJs -> evalJS -> JS脚本 -> 本方法
         runBlocking(coroutineContext) {
-            withTimeout(1800000) {
+            withTimeout(THIRTY_MINUTES_TIMEOUT_MS) {
                 WebBook.preciseSearchAwait(bookSource, book.name, book.author)
                     .getOrThrow().let {
                         book.bookUrl = it.bookUrl
@@ -863,20 +879,36 @@ class AnalyzeRule(
 
     /**
      * 更新tocUrl,有些书源目录url定期更新,可以在js调用更新
+     *
+     * **技术说明 - runBlocking 使用原因**:
+     * 此方法从 Rhino JS 引擎脚本中调用，JS 引擎不支持 Kotlin 协程，
+     * 但需要调用 suspend 函数。使用 runBlocking 桥接同步 JS 调用到异步 Kotlin 代码。
+     *
+     * **注意事项**:
+     * 1. 仅在 preUpdateJs 规则中可调用
+     * 2. 已在协程上下文中调用（由 WebBook.runPreUpdateJs 触发）
+     * 3. 使用 coroutineContext 确保在正确的协程上下文中执行
+     *
+     * @see WebBook.runPreUpdateJs
+     * @see io.legado.app.model.analyzeRule.AnalyzeRule.evalJS
      */
+    @Suppress("BlockingMethodInNonBlockingContext")
     fun refreshTocUrl() {
         if (!preUpdateJs) throw NoStackTraceException("只能在 preUpdateJs 中调用")
         val bookSource = source as? BookSource
         val book = book as? Book
         if (bookSource == null || book == null) return
+        // 注意：runBlocking 用于 JS 脚本桥接，JS 引擎不支持协程
+        // 调用链: suspend WebBook.runPreUpdateJs -> evalJS -> JS脚本 -> 本方法
         runBlocking(coroutineContext) {
-            withTimeout(1800000) {
+            withTimeout(THIRTY_MINUTES_TIMEOUT_MS) {
                 WebBook.getBookInfoAwait(bookSource, book, false)
             }
         }
     }
 
     companion object {
+        private const val THIRTY_MINUTES_TIMEOUT_MS = 1800000L
         private val putPattern = Pattern.compile("@put:(\\{[^}]+?\\})", Pattern.CASE_INSENSITIVE)
         private val evalPattern =
             Pattern.compile("@get:\\{[^}]+?\\}|\\{\\{[\\w\\W]*?\\}\\}", Pattern.CASE_INSENSITIVE)

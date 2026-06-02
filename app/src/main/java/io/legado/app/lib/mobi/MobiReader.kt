@@ -10,6 +10,7 @@ import io.legado.app.lib.mobi.utils.readString
 import io.legado.app.lib.mobi.utils.readUInt16
 import io.legado.app.lib.mobi.utils.readUInt32
 import io.legado.app.lib.mobi.utils.readUInt8
+import io.legado.app.utils.printOnDebug
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
@@ -37,7 +38,7 @@ class MobiReader {
                     kf8BoundaryOffset = boundary
                     isKF8 = true
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    e.printOnDebug()
                 }
             }
         }

@@ -1,6 +1,7 @@
 package io.legado.app.lib.cronet
 
 import androidx.annotation.Keep
+import io.legado.app.constant.AppLog
 import okhttp3.RequestBody
 import okio.Buffer
 import org.chromium.net.UploadDataProvider
@@ -27,7 +28,7 @@ class BodyUploadProvider(private val body: RequestBody) : UploadDataProvider(), 
             body.writeTo(buffer)
             buffer.flush()
         } catch (e: IOException) {
-            e.printStackTrace()
+            AppLog.put("BodyUploadProvider fillBuffer失败", e)
         }
     }
 

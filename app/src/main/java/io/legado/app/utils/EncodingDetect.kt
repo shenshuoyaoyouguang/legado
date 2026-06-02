@@ -2,6 +2,7 @@ package io.legado.app.utils
 
 import android.text.TextUtils
 import io.legado.app.lib.icu4j.CharsetDetector
+import io.legado.app.utils.DebugLog.d
 import org.jsoup.Jsoup
 import java.io.File
 
@@ -91,7 +92,7 @@ object EncodingDetect {
                 }
             }
         } catch (e: Exception) {
-            System.err.println("Error: $e")
+            d("EncodingDetect", "读取文件字节失败: ${e.message}")
         }
         return byteArray.copyOf(pos)
     }

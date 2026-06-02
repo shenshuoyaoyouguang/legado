@@ -23,6 +23,7 @@ import io.legado.app.R
 import io.legado.app.base.VMBaseActivity
 import io.legado.app.constant.AppConst
 import io.legado.app.constant.AppConst.imagePathKey
+import io.legado.app.constant.AppLog
 import io.legado.app.databinding.ActivityWebViewBinding
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.http.CookieStore
@@ -230,6 +231,29 @@ class WebViewActivity : VMBaseActivity<ActivityWebViewBinding, WebViewModel>() {
         }
     }
 
+    private fun handleSslError(handler: SslErrorHandler?, error: SslError?) {
+        val targetUrl = error?.url ?: viewModel.baseUrl
+        AppLog.put("WebView SSL证书异常")
+        if (AppConfig.sslStrictMode) {
+            handler?.cancel()
+            return
+        }
+        alert(
+            title = getString(R.string.draw),
+            message = getString(R.string.ssl_error_detected) + "\n\nURL: $targetUrl"
+        ) {
+            cancelButton {
+                handler?.cancel()
+            }
+            okButton {
+                handler?.proceed()
+            }
+            onCancelled {
+                handler?.cancel()
+            }
+        }
+    }
+
     override fun finish() {
         SourceVerificationHelp.checkResult(viewModel.sourceOrigin)
         super.finish()
@@ -337,7 +361,7 @@ class WebViewActivity : VMBaseActivity<ActivityWebViewBinding, WebViewModel>() {
             handler: SslErrorHandler?,
             error: SslError?
         ) {
-            handler?.proceed()
+            handleSslError(handler, error)
         }
 
     }

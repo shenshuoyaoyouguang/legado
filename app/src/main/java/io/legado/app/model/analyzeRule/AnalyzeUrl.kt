@@ -472,6 +472,25 @@ class AnalyzeUrl(
         }
     }
 
+    /**
+     * 阻塞版本的网络请求方法，供JS脚本和Java调用。
+     *
+     * **设计说明：**
+     * - 此方法必须使用 runBlocking 阻塞等待协程完成
+     * - Rhino JS引擎不支持 Kotlin 协程的挂起机制，需要同步获取返回值
+     * - 内部的 getStrResponseAwait() 是 suspend 函数，必须通过 runBlocking 桥接
+     *
+     * **安全性：**
+     * - 使用 coroutineContext 参数支持取消检测，避免无限阻塞
+     * - 调用方应确保不在主线程调用此方法（防止ANR）
+     *
+     * **调用位置：**
+     * - JsExtensions.ajax(), connect() 等JS桥接方法
+     * - AnalyzeRule.ajax() 书源规则解析
+     * - 内部 WebView POST 请求处理
+     *
+     * **推荐：** Kotlin代码应使用 getStrResponseAwait() 挂起函数
+     */
     @JvmOverloads
     fun getStrResponse(
         jsStr: String? = null,
@@ -530,6 +549,18 @@ class AnalyzeUrl(
         }
     }
 
+    /**
+     * 阻塞版本的网络请求方法，返回原始Response对象。
+     *
+     * **设计说明：**
+     * - 此方法使用 runBlocking 阻塞等待协程完成
+     * - 保留此方法以提供完整的API，供未来可能的JS/Java调用使用
+     * - 当前无外部调用，但不应移除以保持API完整性
+     *
+     * **安全性：** 使用 coroutineContext 参数支持取消检测
+     *
+     * **推荐：** Kotlin代码应使用 getResponseAwait() 挂起函数
+     */
     fun getResponse(): Response {
         return runBlocking(coroutineContext) {
             getResponseAwait()
@@ -559,6 +590,24 @@ class AnalyzeUrl(
         return getResponseAwait().body.bytes()
     }
 
+    /**
+     * 阻塞版本的字节数组获取方法，供JS脚本和Glide图片加载调用。
+     *
+     * **设计说明：**
+     * - 此方法必须使用 runBlocking 阻塞等待协程完成
+     * - Rhino JS引擎不支持 Kotlin 协程的挂起机制，需要同步获取返回值
+     * - Glide的 DataFetcher 接口要求同步返回数据
+     *
+     * **安全性：**
+     * - 使用 coroutineContext 参数支持取消检测
+     * - Glide加载器(LegadoDataUrlLoader)有独立的 cancel() 机制
+     *
+     * **调用位置：**
+     * - JsExtensions.getZipByteArrayContent(), getRarByteArrayContent() 等JS桥接方法
+     * - LegadoDataUrlLoader.loadData() Glide图片加载
+     *
+     * **推荐：** Kotlin代码应使用 getByteArrayAwait() 挂起函数
+     */
     fun getByteArray(): ByteArray {
         return runBlocking(coroutineContext) {
             getByteArrayAwait()
@@ -575,6 +624,22 @@ class AnalyzeUrl(
         return getResponseAwait().body.byteStream()
     }
 
+    /**
+     * 阻塞版本的输入流获取方法，供JS脚本调用。
+     *
+     * **设计说明：**
+     * - 此方法必须使用 runBlocking 阻塞等待协程完成
+     * - Rhino JS引擎不支持 Kotlin 协程的挂起机制，需要同步获取返回值
+     *
+     * **安全性：**
+     * - 使用 coroutineContext 参数支持取消检测
+     * - 调用方应确保不在主线程调用此方法（防止ANR）
+     *
+     * **调用位置：**
+     * - JsExtensions.downloadFile() JS桥接方法
+     *
+     * **推荐：** Kotlin代码应使用 getInputStreamAwait() 挂起函数
+     */
     fun getInputStream(): InputStream {
         return runBlocking(coroutineContext) {
             getInputStreamAwait()
